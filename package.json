@@ -9,7 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "pack:mac": "npm run build && electron-builder --mac dir && codesign --force --deep --sign - release/mac-arm64/JZRM.app && codesign --verify --deep --strict release/mac-arm64/JZRM.app",
-    "pack:win": "npm run build && electron-builder --win nsis"
+    "pack:win": "npm run build && electron-builder --win nsis --publish never"
   },
   "keywords": [],
   "author": "",
