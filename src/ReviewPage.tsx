@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Download, Eye, FileText, RefreshCcw, ShieldCheck, Sparkles, Trash2, WandSparkles, X } from 'lucide-react';
+import { ArrowRight, Check, Download, Eye, FileText, RefreshCcw, ShieldCheck, Sparkles, Trash2, Users, WandSparkles, X } from 'lucide-react';
 import { useApp } from './context';
 import { listEntities, type Entity } from './store';
 import { platform } from './platform';
@@ -184,7 +184,7 @@ function PolishPage() {
 function ReviewWorkspace() {
   const app = useApp();
   const works = listEntities(app.state, { kind: 'work' });
-  const [tab, setTab] = useState<'review' | 'edit' | 'reader' | 'zhuque'>('review');
+  const [tab, setTab] = useState<'review' | 'edit' | 'reader' | 'zhuque' | 'appearance'>('review');
   const [jump, setJump] = useState<{ chapterId: string; quote: string } | null>(null);
   const jumpToEdit = (chapterId: string, quote: string) => { setJump({ chapterId, quote }); setTab('edit'); };
   const [sourceId, setSourceId] = useState(app.workId ? `work:${app.workId}` : works[0] ? `work:${works[0].id}` : '');
@@ -202,7 +202,7 @@ function ReviewWorkspace() {
 
   return <><div className="page-intro"><div><span className="eyebrow">REVIEW / EVIDENCE</span><h2>审查修改</h2><p>章节评审、修改与替换、读者模拟与朱雀 AI 检测。</p></div></div>
     <div className="review-tabs">
-      {([['review', '审查 · 章节评审', Sparkles], ['edit', '修改', WandSparkles], ['reader', '读者模拟', Eye], ['zhuque', '朱雀AI检测', ShieldCheck]] as const).map(([key, label, Icon]) => <button key={key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}
+      {([['review', '审查 · 章节评审', Sparkles], ['edit', '修改', WandSparkles], ['reader', '读者模拟', Eye], ['zhuque', '朱雀AI检测', ShieldCheck], ['appearance', '角色出场', Users]] as const).map(([key, label, Icon]) => <button key={key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}
     </div>
     <div className="selector-strip">
       <label>作品<select value={sourceId} onChange={e => selectSource(e.target.value)}><option value="">未选择作品</option>{works.map(w => <option key={w.id} value={`work:${w.id}`}>{w.title}</option>)}</select></label>
@@ -212,6 +212,7 @@ function ReviewWorkspace() {
     {tab === 'edit' && <EditTab workId={workId} chapters={chapters} context={context} jump={jump} />}
     {tab === 'reader' && <ReaderSimTab chapters={chapters} context={context} />}
     {tab === 'zhuque' && <ZhuqueTab chapters={chapters} context={context} run={run} busy={busy} />}
+    {tab === 'appearance' && <AppearanceTab workId={workId} chapters={chapters} />}
   </>;
 }
 
@@ -469,6 +470,33 @@ function ZhuqueTab({ chapters, context, run, busy }: { chapters: Entity[]; conte
 }
 
 /* 三案改写弹窗 */
+/* 角色出场统计：纯计算，统计每个角色在各章节的出现次数 */
+function AppearanceTab({ workId, chapters }: { workId: string; chapters: Entity[] }) {
+  const app = useApp();
+  const characters = listEntities(app.state, { kind: 'setting', workId, category: 'characters' })
+    .filter(e => !e.meta.imageData && !['人物档案', '人物关系'].includes(e.title))
+    .map(e => e.title)
+    .filter((name, i, arr) => arr.indexOf(name) === i);
+  const count = (text: string, name: string) => (text.split(name).length - 1);
+  const rows = characters.map(name => ({ name, counts: chapters.map(c => count(c.content, name)), total: chapters.reduce((n, c) => n + count(c.content, name), 0) }))
+    .filter(r => r.total > 0).sort((a, b) => b.total - a.total);
+  const max = Math.max(1, ...rows.map(r => r.total));
+  return <section className="paper-page">
+    <div className="panel-heading"><h3>角色出场统计</h3><span>{rows.length} 名角色 · {chapters.length} 章</span></div>
+    <p className="muted">按角色姓名在正文中的出现次数统计出场分布（仅供参考，不含代词指代与改名识别）。</p>
+    <div className="appearance-bars">{rows.map(r => <div className="appearance-row" key={r.name}>
+      <span className="appearance-name">{r.name}</span>
+      <div className="appearance-bar"><div className="appearance-fill" style={{ width: `${Math.round((r.total / max) * 100)}%` }} /></div>
+      <strong className="appearance-total">{r.total}</strong>
+    </div>)}</div>
+    {rows.length > 0 && <div className="appearance-matrix"><table className="chapter-review-table">
+      <thead><tr><th>角色</th>{chapters.map(c => <th key={c.id}>{c.title}</th>)}<th>合计</th></tr></thead>
+      <tbody>{rows.map(r => <tr key={r.name}><td>{r.name}</td>{r.counts.map((n, i) => <td key={i}>{n || '—'}</td>)}<td><strong>{r.total}</strong></td></tr>)}</tbody>
+    </table></div>}
+    {!rows.length && <div className="empty-small">没有可统计的角色出场。先在设定的人物页添加角色档案。</div>}
+  </section>;
+}
+
 function RewriteDialog({ original, variants, onApply, onClose }: { original: string; variants: string[]; onApply(v: string): void; onClose(): void }) {
   return <div className="modal-backdrop" onClick={onClose}>
     <div className="modal-card" onClick={e => e.stopPropagation()}>
