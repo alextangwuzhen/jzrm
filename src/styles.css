@@ -371,3 +371,9 @@
 .pipeline-step{border:1px solid #e0d7cc;background:#fffdfa;border-radius:100px;padding:7px 13px;font-size:12px;color:#7a6f63}
 .pipeline-step.active{background:#f0dad4;border-color:#ad5b50;color:#a3483d;font-weight:700}
 .pipeline-step.done{background:#e4eee7;color:#55765b}
+
+/* 内测01第2轮：知情对齐矩阵 */
+.knowledge-cell{border:0;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600}
+.knowledge-cell.knows{background:#e4eee7;color:#55765b}
+.knowledge-cell.unknown{background:#f1ece3;color:#8b8176}
+.knowledge-cell:hover{filter:brightness(.96)}
