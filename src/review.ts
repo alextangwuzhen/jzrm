@@ -1,4 +1,5 @@
-export const reviewDimensions = ['逻辑性', '人物弧光', '情绪描写', '叙事流畅度', '语言文风', '节奏', '限制词'] as const;
+export const reviewDimensions = ['设定一致性', '逻辑合理性', '人物塑造', '节奏把控', '文笔质量', '痕迹'] as const;
+export const reviewSeverities = ['严重', '轻微', '其他'] as const;
 
 export function reviewEligibility(text: string): { eligible: boolean; score: null; reason?: string; length: number } {
   const length = text.replace(/\s/g, '').length;

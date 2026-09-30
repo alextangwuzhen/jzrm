@@ -259,3 +259,36 @@
 .zhuque-dim strong{font-size:16px;color:#b25346;margin-right:7px}
 .zhuque-dim small{color:#8d8174;display:block;margin-top:6px;line-height:1.5}
 .ai-rate-banner{padding:11px 14px;border-radius:9px;background:#fbf1db;color:#806943;font-size:12px;line-height:1.6;margin:14px 0}
+
+/* 内测01第2轮：AI润笔情绪变化横向输入列 */
+.polish-emotion-row{align-items:flex-start;flex-wrap:wrap}
+.polish-emotion-row .emotion-role{width:150px;flex:none}
+.emotion-columns{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
+.emotion-col{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e6e0d6;border-radius:9px;padding:6px 8px}
+.emotion-col input{width:118px;min-width:0;margin:0;padding:8px 9px}
+.emotion-col input:last-of-type{width:66px}
+
+/* 内测01第2轮：章节评审沉浸式视图 */
+.chapter-review-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.chapter-review-row{display:flex;align-items:center;gap:14px;text-align:left;background:#fffdfa;border:1px solid #e0d7cc;border-radius:10px;padding:12px 15px;cursor:pointer}
+.chapter-review-row:hover{border-color:#c99c90}
+.chapter-review-row.active{border-color:#ad5b50;background:#fff5f1}
+.chapter-review-title{font-weight:700;min-width:130px}
+.chapter-review-row>span:nth-child(2){color:#9a8d80;font-size:12px;min-width:70px}
+.chapter-review-summary{flex:1;color:#7e7469;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.review-immersive{margin-top:20px;border-top:1px solid #e6ded3;padding-top:18px}
+.review-immersive-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.review-immersive-body,.review-immersive-result{background:#fffdfa;border:1px solid #e0d7cc;border-radius:12px;padding:17px}
+.review-immersive-body textarea{width:100%;min-height:480px;border:1px solid #e7e0d5;border-radius:9px;padding:13px;font-size:14px;line-height:2}
+.review-block{margin:14px 0}
+.review-block h4{margin:0 0 8px;color:#6f645a;font-size:14px}
+.review-deviation{border-left:2px solid #c9a24a;padding-left:10px;margin:6px 0;color:#6f5a2e;font-size:12px}
+.severity-badge{padding:3px 8px;border-radius:100px;color:#fff;font-size:10px}
+.severity-badge.严重{background:#b5433a}
+.severity-badge.轻微{background:#c9a24a}
+.severity-badge.其他{background:#8b8176}
+.issue-card.severity-严重{border-left:3px solid #b5433a}
+.issue-card.severity-轻微{border-left:3px solid #c9a24a}
+.issue-card.severity-其他{border-left:3px solid #8b8176}
+.reader-sim-feedback{margin-top:12px;padding:12px;background:#f8f3ec;border-radius:9px;max-height:280px;overflow:auto}
+.reader-sim-feedback p{white-space:pre-wrap;font-size:12px;line-height:1.7;color:#5f574d}

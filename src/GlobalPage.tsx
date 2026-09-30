@@ -10,7 +10,6 @@ import { AdaptationPage } from './AdaptationPage';
 import { AgentsPage } from './AgentsPage';
 import { AiConfigPage } from './AiConfigPage';
 import { StylesPage, SplitPage } from './StylesPage';
-import { WorkflowPage } from './WorkflowPage';
 import { NamesPage } from './NamesPage';
 import { parseSettingDocument } from './settingImport';
 
@@ -28,7 +27,6 @@ export function GlobalPage({ page, category }: { page: string; category?: string
   if (page === 'agents') return <AgentsPage category={category}/>;
   if (page === 'styles') return <StylesPage/>;
   if (page === 'split') return <SplitPage/>;
-  if (page === 'workflow') return <WorkflowPage/>;
   if (page === 'search') return <SearchPage/>;
   if (page === 'help') return <HelpPage/>;
   if (page === 'settings') return <SettingsPage category={category}/>;
@@ -66,7 +64,7 @@ function HomePage() {
   const chapters = listEntities(app.state, { kind: 'chapter' });
   const count = chapters.reduce((n, c) => n + c.content.replace(/\s/g,'').length, 0);
   const active = works.find(w => w.id === app.state.preferences.activeWorkId) ?? works[0];
-  return <><div className="hero"><span className="eyebrow">YOUR STORY STARTS HERE</span><h2>见字如面，我们的故事才刚刚开始。</h2><p>从灵感，到小说，再到每个角色亲历的剧本杀故事。</p><div className="action-row"><button className="button primary" onClick={() => app.navigate('/library')}><Plus size={16}/>创建作品</button><button className="button" onClick={() => app.navigate('/workflow')}>查看创作流程<ArrowRight size={16}/></button></div></div><div className="stat-grid"><div><span>总作品</span><strong>{works.length}</strong><small>部</small></div><div><span>总章节</span><strong>{chapters.length}</strong><small>章</small></div><div><span>正文字数</span><strong>{count.toLocaleString()}</strong><small>字</small></div><div><span>创作流程</span><strong>8</strong><small>步预设</small></div></div><div className="home-grid"><section className="paper-page"><div className="panel-heading"><h3>继续创作</h3><button className="text-button" onClick={() => app.navigate('/library')}>全部作品<ArrowRight size={15}/></button></div>{active ? <div className="featured-work"><div className="cover-tile">J</div><div><strong>{active.title}</strong><p>{active.content || '故事正在等待下一页。'}</p><button className="button primary" onClick={() => app.navigate(routeFor(active.id, 'body'))}>继续编辑</button></div></div> : <div className="empty-small">还没有作品，创建第一部开始吧。</div>}</section><section className="paper-page"><h3>建议创作顺序</h3><ol className="steps-list"><li>记录灵感，整理故事方向</li><li>提炼大纲与作品设定</li><li>细纲与正文逐章创作</li><li>审校后改编剧本杀并复审</li></ol><button className="button" onClick={() => app.navigate('/workflow')}>打开画布流程</button></section></div></>;
+  return <><div className="hero"><span className="eyebrow">YOUR STORY STARTS HERE</span><h2>见字如面，我们的故事才刚刚开始。</h2><p>从灵感，到小说，再到每个角色亲历的剧本杀故事。</p><div className="action-row"><button className="button primary" onClick={() => app.navigate('/library')}><Plus size={16}/>创建作品</button><button className="button" onClick={() => app.navigate('/review')}>审查修改<ArrowRight size={16}/></button></div></div><div className="stat-grid"><div><span>总作品</span><strong>{works.length}</strong><small>部</small></div><div><span>总章节</span><strong>{chapters.length}</strong><small>章</small></div><div><span>正文字数</span><strong>{count.toLocaleString()}</strong><small>字</small></div><div><span>内置读者 Agent</span><strong>3</strong><small>视角</small></div></div><div className="home-grid"><section className="paper-page"><div className="panel-heading"><h3>继续创作</h3><button className="text-button" onClick={() => app.navigate('/library')}>全部作品<ArrowRight size={15}/></button></div>{active ? <div className="featured-work"><div className="cover-tile">J</div><div><strong>{active.title}</strong><p>{active.content || '故事正在等待下一页。'}</p><button className="button primary" onClick={() => app.navigate(routeFor(active.id, 'body'))}>继续编辑</button></div></div> : <div className="empty-small">还没有作品，创建第一部开始吧。</div>}</section><section className="paper-page"><h3>建议创作顺序</h3><ol className="steps-list"><li>记录灵感，整理故事方向</li><li>提炼大纲与作品设定</li><li>细纲与正文逐章创作</li><li>审校后改编剧本杀并复审</li></ol></section></div></>;
 }
 
 function LibraryPage() {
