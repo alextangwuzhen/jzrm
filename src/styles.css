@@ -304,3 +304,21 @@
 .reusable-row{border-left:2px solid #c9a24a;padding-left:11px;margin:8px 0}
 .reusable-row p{white-space:pre-wrap;font-size:12px;line-height:1.7;color:#5f574d;margin:4px 0 0}
 .split-example{border-left:3px solid #b85d50;padding-left:12px;margin-top:14px;color:#8b7069;font-family:'Noto Serif SC',serif;font-size:13px}
+
+/* 内测01第2轮：多角色加权评审 + 红线 + 连贯性 */
+.role-row{border-bottom:1px solid #f0e9df;padding:8px 0;display:grid;grid-template-columns:130px 44px 1fr;gap:8px;align-items:start}
+.role-row:last-child{border-bottom:0}
+.role-name{font-weight:700;font-size:12px;color:#6f645a}
+.role-score{font-family:'Noto Serif SC',serif;font-size:20px;color:#b25346}
+.role-row p{margin:0;grid-column:3;grid-row:1/3;font-size:12px;color:#5f574d;line-height:1.6}
+.role-row .text-button{grid-column:3}
+.redline-row{border:1px solid #eee0dc;border-radius:9px;padding:10px 12px;margin:8px 0}
+.redline-row.P0{border-left:3px solid #b5433a;background:#fff8f5}
+.redline-row.P1{border-left:3px solid #c9a24a;background:#fdfaf3}
+.redline-row strong{margin:0 8px;color:#4a4138}
+.redline-row blockquote{border-left:2px solid #d9c1b6;padding-left:9px;margin:7px 0;color:#463b32;font-size:12px}
+.redline-row p{margin:5px 0;font-size:12px}
+.redline-row small{color:#8d8174;display:block}
+.continuity-row{border-left:3px solid #4a7d94;background:#f5fafb;border-radius:8px;padding:10px 12px;margin:8px 0}
+.continuity-row p{margin:4px 0;font-size:12px;color:#5f574d}
+.continuity-row small{color:#8d8174;display:block;margin-top:5px}

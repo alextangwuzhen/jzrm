@@ -3,14 +3,14 @@ import { ArrowRight, Check, Download, Eye, FileText, RefreshCcw, ShieldCheck, Sp
 import { useApp } from './context';
 import { listEntities, type Entity } from './store';
 import { platform } from './platform';
-import { availableModels, extractJson, modelFromProvider, workContext } from './ai';
-import { createRewriteProposal, reviewDimensions, reviewEligibility } from './review';
+import { availableModels, extractJson, modelFromProvider, pickModel, workContext } from './ai';
+import { createRewriteProposal, reviewDimensions, reviewEligibility, reviewRoles, roleFocus, redlineRules, gradeBand, type ReviewRole, type ReviewRedline, type ReviewContinuity } from './review';
 import { splitImportedChapters } from './importedChapters';
 import { restrictionTypes } from './restrictions';
 import { readerPerspectives } from './readerAgents';
 
 type Issue = { severity?: string; quote: string; dimension: string; reason: string; suggestion: string };
-type ChapterReview = { overall?: number; scores?: Record<string, number>; summary?: string; deviations?: string[]; aiTrace?: string[]; issues?: Issue[] };
+type ChapterReview = { overall?: number; grade?: string; gradeHint?: string; scores?: Record<string, number>; roles?: ReviewRole[]; redlines?: ReviewRedline[]; continuity?: ReviewContinuity[]; summary?: string; deviations?: string[]; aiTrace?: string[]; issues?: Issue[] };
 type EmotionPhase = { from: string; to: string; intensity: string };
 type EmotionTarget = { role: string; phases: EmotionPhase[] };
 
@@ -190,7 +190,7 @@ function ReviewWorkspace() {
   const chapters = listEntities(app.state, { kind: 'chapter', workId: workId || '__none__' });
   const [modelId, setModelId] = useState('');
   const providers = availableModels(app.state.entities);
-  const selectedProvider = providers.find(p => p.id === modelId) ?? providers[0];
+  const selectedProvider = providers.find(p => p.id === modelId) ?? pickModel(app.state.entities, '评审') ?? providers[0];
   const context = workContext(app.state.entities, workId || app.workId, app.state.preferences.contextLimit);
 
   const [busy, setBusy] = useState(false);
@@ -227,7 +227,10 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
   useEffect(() => { setBody(activeChapter?.content ?? ''); }, [activeId, activeChapter?.id]);
 
   const reviewChapter = async (chapter: Entity) => {
-    const prompt = `你是小说审校员。评审以下章节，给出：综合分（0-100）、${reviewDimensions.join('、')}六维分、一句综述、设定偏离项、痕迹分析、以及问题明细（每条注明严重程度：严重/轻微/其他）。材料不足时降低综合分并说明缺口。\n作品事实与限制：\n${context}\n章节：\n${chapter.content}\n只返回 JSON: {"overall":0,"scores":{"${reviewDimensions.join('":0,"')}":0},"summary":"综述","deviations":["设定偏离"],"aiTrace":["AI痕迹"],"issues":[{"severity":"严重","quote":"原文证据","dimension":"维度","reason":"问题","suggestion":"建议"}]}`;
+    if (busyChapter) return;
+    const roleSpec = reviewRoles.map(r => `${r.role}(${Math.round(r.weight * 100)}%)看${roleFocus[r.role]}`).join('；');
+    const redSpec = redlineRules.map(r => `${r.level}·${r.rule}`).join('；');
+    const prompt = `你是小说审校团，按 5 个角色分别评审本章，再按权重合成综合分。${roleSpec}。\n另给${reviewDimensions.join('、')}六维分。\n对照作品资料（大纲/细纲/设定/伏笔）做连贯性检查：本章目标、要埋的钩子、人物前后状态、要回收的伏笔，逐条指出「预期 vs 实际」的偏差。\n红线命中：${redSpec}。\n评分档位：90-100精品 / 85-89优秀可发 / 75-84良好小改可发 / 60-74合格需改 / <60重写。材料不足时降低综合分并说明缺口。\n作品资料：\n${context}\n章节：\n${chapter.content}\n只返回 JSON: {"overall":0,"grade":"档位","gradeHint":"可发/小改可发/需改/重写","scores":{"${reviewDimensions.join('":0,"')}":0},"roles":[{"role":"阅读者","weight":0.25,"score":0,"opinion":"意见","quote":"原文证据"}],"redlines":[{"level":"P0","rule":"规则","quote":"原文","reason":"原因","suggestion":"建议"}],"continuity":[{"kind":"人物状态/钩子/伏笔/目标","expect":"预期","actual":"实际","quote":"原文","suggestion":"建议"}],"summary":"综述","deviations":["设定偏离"],"aiTrace":["AI痕迹"],"issues":[{"severity":"严重","quote":"原文证据","dimension":"维度","reason":"问题","suggestion":"建议"}]}`;
     setBusyChapter(chapter.id);
     try { const response = await run(prompt); if (!response) return; app.add('review', `${chapter.title} · 审查`, response, { workId: workId || undefined, parentId: chapter.id, meta: { createdAt: new Date().toISOString() } }); app.notify(`已评审《${chapter.title}》`); } finally { setBusyChapter(''); }
   };
@@ -244,7 +247,7 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
       {chapters.map(c => { const r = byChapter.get(c.id); const d = r ? parse(r) : {}; return <button key={c.id} className={`chapter-review-row ${activeId === c.id ? 'active' : ''}`} onClick={() => setActiveId(c.id)}>
         <span className="chapter-review-title">{c.title}</span>
         <span>{c.content.replace(/\s/g, '').length} 字</span>
-        <strong className="review-score">{d.overall != null ? `${d.overall} / 100` : '未评审'}</strong>
+        <strong className="review-score">{d.overall != null ? `${d.overall} / 100${d.grade ? ` · ${d.grade}` : ''}` : '未评审'}</strong>
         <span className="chapter-review-summary">{d.summary ?? ''}</span>
         <button className="button" disabled={busyChapter === c.id} onClick={e => { e.stopPropagation(); reviewChapter(c); }}><Sparkles size={14} />{busyChapter === c.id ? '评审中…' : '评审'}</button>
       </button>; })}
@@ -255,7 +258,7 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
       <div className="panel-heading">
         <h3>{activeChapter.title} · 章节评审</h3>
         <div className="action-row">
-          {data.overall != null && <strong className="score">综合分 {data.overall} / 100</strong>}
+          {data.overall != null && <strong className="score">综合分 {data.overall} / 100 · {data.grade ?? gradeBand(data.overall).grade}（{data.gradeHint ?? gradeBand(data.overall).hint}）</strong>}
           <button className="button primary" onClick={saveBody}><Check size={15} />保存正文</button>
         </div>
       </div>
@@ -267,6 +270,9 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
         <div className="review-immersive-result">
           {activeReview ? <div>
             {data.summary && <div className="review-block"><h4>综述</h4><p>{data.summary}</p></div>}
+            {data.roles && data.roles.length > 0 && <div className="review-block"><h4>五角色加权评审</h4>{data.roles.map((r, i) => <div className="role-row" key={i}><span className="role-name">{r.role}（{Math.round(r.weight * 100)}%）</span><strong className="role-score">{r.score}</strong><p>{r.opinion}</p>{r.quote && <button className="text-button" onClick={() => locate(r.quote)}>定位<ArrowRight size={12} /></button>}</div>)}</div>}
+            {data.redlines && data.redlines.length > 0 && <div className="review-block"><h4>红线命中</h4>{data.redlines.map((r, i) => <div className={`redline-row ${r.level}`} key={i}><span className={`tiny-label severity-badge ${r.level === 'P0' ? '严重' : '轻微'}`}>{r.level}</span><strong>{r.rule}</strong><button className="text-button" onClick={() => locate(r.quote)}>定位<ArrowRight size={12} /></button><blockquote>{r.quote}</blockquote><p>{r.reason}</p><small>建议：{r.suggestion}</small></div>)}</div>}
+            {data.continuity && data.continuity.length > 0 && <div className="review-block"><h4>连贯性对照（预期 vs 实际）</h4>{data.continuity.map((c, i) => <div className="continuity-row" key={i}><span className="tiny-label">{c.kind}</span><p><strong>预期：</strong>{c.expect}</p><p><strong>实际：</strong>{c.actual}</p>{c.quote && <button className="text-button" onClick={() => locate(c.quote)}>定位<ArrowRight size={12} /></button>}<small>建议：{c.suggestion}</small></div>)}</div>}
             {data.scores && <div className="score-grid">{reviewDimensions.map(d => <div key={d}><span>{d}</span><strong>{data.scores?.[d] ?? '—'}</strong></div>)}</div>}
             {data.deviations && data.deviations.length > 0 && <div className="review-block"><h4>设定偏离项</h4>{data.deviations.map((x, i) => <p key={i} className="review-deviation">{x}</p>)}</div>}
             {data.aiTrace && data.aiTrace.length > 0 && <div className="review-block"><h4>痕迹分析</h4>{data.aiTrace.map((x, i) => <span key={i} className="ai-trace">{x}</span>)}</div>}
@@ -395,7 +401,7 @@ function ReaderSimTab({ chapters, context }: { chapters: Entity[]; context: stri
     const selected = chapters.filter(c => checked.includes(c.id));
     if (!selected.length) { app.notify('请先勾选要模拟的章节'); return; }
     const skill = skills.find(s => s.id === agent.meta.skillId);
-    const provider = providers.find(p => p.id === agent.meta.providerId) ?? providers[0];
+    const provider = providers.find(p => p.id === agent.meta.providerId) ?? pickModel(app.state.entities, '读者') ?? providers[0];
     const model = modelFromProvider(provider);
     if (!model) { app.notify(`${agent.title} 未配置可用模型，请先在 Agent 技能树绑定`); return; }
     setRunning(xs => [...xs, agent.id]);

@@ -24,7 +24,7 @@ const presets:SupplierPreset[]=[
 {name:'OpenAI 图像',url:'https://api.openai.com/v1',protocol:'openai',purpose:'image',models:['gpt-image-2.5-sunburst','gpt-image-2.5-flare','gpt-image-2','gpt-image-1.5']},
 {name:'火山引擎 Seedream',url:'https://ark.cn-beijing.volces.com/api/v3',protocol:'openai',purpose:'image',models:['doubao-seedream-5-0-pro','doubao-seedream-5.0-lite','doubao-seedream-4-5-251128']}
 ];
-const textRoles=[['创作','用于写作修改：续写、改写与润色'],['评审','用于分析评审：章节评审与文风检查'],['辅助','用于世界观、设定、角色等辅助任务'],['拆书','用于拆书分析'],['改编','用于剧本杀改编'],['面宝','用于助手对话']];
+const textRoles=[['创作','用于写作修改：续写、改写与润色'],['评审','用于分析评审：章节评审与文风检查'],['辅助','用于世界观、设定、角色等辅助任务'],['拆书','用于拆书分析'],['改编','用于剧本杀改编'],['面宝','用于助手对话'],['读者','用于读者模拟']];
 function cleanModelId(value:string){return value.trim();}
 function validModelId(value:string){return /^[A-Za-z][A-Za-z0-9._:/-]{1,127}$/.test(value);}
 export function AiModelsPanel({purpose}:{purpose:Purpose}){
