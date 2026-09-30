@@ -292,3 +292,15 @@
 .issue-card.severity-其他{border-left:3px solid #8b8176}
 .reader-sim-feedback{margin-top:12px;padding:12px;background:#f8f3ec;border-radius:9px;max-height:280px;overflow:auto}
 .reader-sim-feedback p{white-space:pre-wrap;font-size:12px;line-height:1.7;color:#5f574d}
+
+/* 内测01第2轮：拆书逐槽位报告 */
+.split-report{margin-top:16px}
+.split-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.split-slot-card{border:1px solid #e0d7cc;border-radius:11px;background:#fffdfa;padding:13px}
+.split-slot-card p{white-space:pre-wrap;font-size:12px;line-height:1.7;color:#5f574d;margin:9px 0 0}
+.slot-kind{font-size:10px;color:#9b726d;background:#f3e7e1;padding:2px 7px;border-radius:100px}
+.split-reusable{margin-top:16px;border-top:1px solid #eee7dc;padding-top:12px}
+.split-reusable h4{margin:0 0 10px}
+.reusable-row{border-left:2px solid #c9a24a;padding-left:11px;margin:8px 0}
+.reusable-row p{white-space:pre-wrap;font-size:12px;line-height:1.7;color:#5f574d;margin:4px 0 0}
+.split-example{border-left:3px solid #b85d50;padding-left:12px;margin-top:14px;color:#8b7069;font-family:'Noto Serif SC',serif;font-size:13px}
