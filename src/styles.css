@@ -350,3 +350,24 @@
 .appearance-total{min-width:36px;text-align:right;font-family:'Noto Serif SC',serif;font-size:16px;color:#a3483d}
 .appearance-matrix{margin-top:16px;overflow-x:auto}
 .appearance-matrix table{min-width:640px}
+
+/* 内测01第2轮：情绪曲线 */
+.emotion-curve{display:flex;align-items:flex-end;gap:10px;height:240px;padding:12px;margin:14px 0;background:#faf7f1;border:1px solid #e7dfd3;border-radius:11px;overflow-x:auto}
+.emotion-curve-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;min-width:72px;flex:1}
+.emotion-curve-bar{width:100%;max-width:52px;background:linear-gradient(180deg,#c07b6f,#ad483e);border-radius:7px 7px 0 0;min-height:8px}
+.emotion-curve-label{font-size:11px;color:#7a6f63}
+.emotion-curve-col small{font-size:9px;color:#9a8d80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px}
+
+/* 内测01第2轮：内联 SVG 大图与关系图悬浮 */
+.diagram-svg-inline{display:flex;justify-content:center}
+.diagram-svg-inline svg{width:100%;height:auto;max-height:78vh;border-radius:8px}
+
+/* 内测01第2轮：章节规格 + 设定流水线 */
+.chapter-spec{border:1px solid #e6dccd;border-radius:10px;padding:12px;margin:12px 0;background:#fbf8f2;display:grid;gap:9px}
+.chapter-spec>strong{color:#6f645a;font-size:12px}
+.chapter-spec input{width:100%;min-width:0;font-size:12px}
+.setting-pipeline{width:min(760px,92vw);max-height:88vh;overflow:auto}
+.pipeline-steps{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.pipeline-step{border:1px solid #e0d7cc;background:#fffdfa;border-radius:100px;padding:7px 13px;font-size:12px;color:#7a6f63}
+.pipeline-step.active{background:#f0dad4;border-color:#ad5b50;color:#a3483d;font-weight:700}
+.pipeline-step.done{background:#e4eee7;color:#55765b}

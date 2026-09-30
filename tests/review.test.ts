@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reviewEligibility, reviewDimensions, reviewSeverities, reviewRoles, gradeBand, createRewriteProposal } from '../src/review';
+import { reviewEligibility, reviewDimensions, reviewSeverities, reviewRoles, gradeBand, rhythmBreaks, publishReviewDimensions, createRewriteProposal } from '../src/review';
 
 describe('审查修改', () => {
   it('材料不足时不输出看似精确的分数', () => {
@@ -30,5 +30,20 @@ describe('审查修改', () => {
     expect(proposal.original).toBe('原文');
     expect(proposal.variants).toHaveLength(3);
     expect(proposal.selected).toBeNull();
+  });
+
+  it('情绪曲线标注相邻强度骤变', () => {
+    const points = [
+      { chapterId: 'a', chapterTitle: '第1章', emotion: '平静', intensity: 3 },
+      { chapterId: 'b', chapterTitle: '第2章', emotion: '热血', intensity: 9 },
+      { chapterId: 'c', chapterTitle: '第3章', emotion: '悲伤', intensity: 4 }
+    ];
+    expect(rhythmBreaks(points).length).toBe(2);
+    expect(rhythmBreaks(points)[0]).toMatchObject({ index: 1, delta: 6 });
+    expect(rhythmBreaks(points, 10)).toEqual([]);
+  });
+
+  it('发布审查为整书级七维', () => {
+    expect(publishReviewDimensions).toEqual(['文风', '时间线', '伏笔', '节奏', '商业潜力', '编辑视角', '逻辑一致性']);
   });
 });

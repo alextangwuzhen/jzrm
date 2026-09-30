@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Download, Eye, FileText, RefreshCcw, ShieldCheck, Sparkles, Trash2, Users, WandSparkles, X } from 'lucide-react';
+import { ArrowRight, Check, ClipboardCheck, Download, Eye, FileText, LineChart, RefreshCcw, ShieldCheck, Sparkles, Trash2, Users, WandSparkles, X } from 'lucide-react';
 import { useApp } from './context';
 import { listEntities, type Entity } from './store';
 import { platform } from './platform';
 import { availableModels, extractJson, modelFromProvider, pickModel, workContext } from './ai';
-import { createRewriteProposal, reviewDimensions, reviewEligibility, reviewRoles, roleFocus, redlineRules, gradeBand, type ReviewRole, type ReviewRedline, type ReviewContinuity } from './review';
+import { createRewriteProposal, reviewDimensions, reviewEligibility, reviewRoles, roleFocus, redlineRules, gradeBand, publishReviewDimensions, rhythmBreaks, type ReviewRole, type ReviewRedline, type ReviewContinuity, type EmotionPoint } from './review';
 import { splitImportedChapters } from './importedChapters';
 import { restrictionTypes } from './restrictions';
 import { readerPerspectives } from './readerAgents';
@@ -184,7 +184,7 @@ function PolishPage() {
 function ReviewWorkspace() {
   const app = useApp();
   const works = listEntities(app.state, { kind: 'work' });
-  const [tab, setTab] = useState<'review' | 'edit' | 'reader' | 'zhuque' | 'appearance'>('review');
+  const [tab, setTab] = useState<'review' | 'edit' | 'reader' | 'zhuque' | 'appearance' | 'emotion' | 'publish'>('review');
   const [jump, setJump] = useState<{ chapterId: string; quote: string } | null>(null);
   const jumpToEdit = (chapterId: string, quote: string) => { setJump({ chapterId, quote }); setTab('edit'); };
   const [sourceId, setSourceId] = useState(app.workId ? `work:${app.workId}` : works[0] ? `work:${works[0].id}` : '');
@@ -202,7 +202,7 @@ function ReviewWorkspace() {
 
   return <><div className="page-intro"><div><span className="eyebrow">REVIEW / EVIDENCE</span><h2>审查修改</h2><p>章节评审、修改与替换、读者模拟与朱雀 AI 检测。</p></div></div>
     <div className="review-tabs">
-      {([['review', '审查 · 章节评审', Sparkles], ['edit', '修改', WandSparkles], ['reader', '读者模拟', Eye], ['zhuque', '朱雀AI检测', ShieldCheck], ['appearance', '角色出场', Users]] as const).map(([key, label, Icon]) => <button key={key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}
+      {([['review', '审查 · 章节评审', Sparkles], ['edit', '修改', WandSparkles], ['reader', '读者模拟', Eye], ['zhuque', '朱雀AI检测', ShieldCheck], ['appearance', '角色出场', Users], ['emotion', '情绪曲线', LineChart], ['publish', '发布审查', ClipboardCheck]] as const).map(([key, label, Icon]) => <button key={key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}><Icon size={16} />{label}</button>)}
     </div>
     <div className="selector-strip">
       <label>作品<select value={sourceId} onChange={e => selectSource(e.target.value)}><option value="">未选择作品</option>{works.map(w => <option key={w.id} value={`work:${w.id}`}>{w.title}</option>)}</select></label>
@@ -213,6 +213,8 @@ function ReviewWorkspace() {
     {tab === 'reader' && <ReaderSimTab chapters={chapters} context={context} />}
     {tab === 'zhuque' && <ZhuqueTab chapters={chapters} context={context} run={run} busy={busy} />}
     {tab === 'appearance' && <AppearanceTab workId={workId} chapters={chapters} />}
+    {tab === 'emotion' && <EmotionCurveTab chapters={chapters} run={run} />}
+    {tab === 'publish' && <PublishReviewTab chapters={chapters} context={context} run={run} />}
   </>;
 }
 
@@ -470,6 +472,68 @@ function ZhuqueTab({ chapters, context, run, busy }: { chapters: Entity[]; conte
 }
 
 /* 三案改写弹窗 */
+/* 情绪曲线：逐章分析情绪倾向与强烈度，标注节奏断裂 */
+function EmotionCurveTab({ chapters, run }: { chapters: Entity[]; run(prompt: string): Promise<string> }) {
+  const app = useApp();
+  const [points, setPoints] = useState<EmotionPoint[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState('');
+  const analyze = async () => {
+    if (!chapters.length) { app.notify('当前作品还没有章节'); return; }
+    setAnalyzing(true);
+    const next: EmotionPoint[] = [];
+    for (const c of chapters) {
+      setProgress(c.title);
+      const response = await run(`分析以下章节的情绪倾向与强烈度。只返回 JSON {"emotion":"悲伤/愤怒/喜悦/平静/紧张/热血等","intensity":7}，intensity 为 1-10 整数。\n章节：${c.content.slice(0, 6000)}`);
+      if (!response) continue;
+      try {
+        const parsed = extractJson(response) as { emotion?: string; intensity?: number };
+        next.push({ chapterId: c.id, chapterTitle: c.title, emotion: String(parsed.emotion ?? '平静'), intensity: Math.max(1, Math.min(10, Number(parsed.intensity ?? 5) || 5)) });
+      } catch { /* 忽略无法解析的章节 */ }
+    }
+    setPoints(next); setAnalyzing(false); setProgress('');
+  };
+  const breaks = rhythmBreaks(points);
+  const maxI = Math.max(1, ...points.map(p => p.intensity));
+  return <section className="paper-page">
+    <div className="panel-heading"><h3>情绪曲线</h3><span>{points.length} 章</span></div>
+    <p className="muted">逐章分析情绪倾向与强烈度，标注相邻强度骤变（≥4）为节奏断裂。</p>
+    <button className="button primary" disabled={analyzing} onClick={analyze}><Sparkles size={15} />{analyzing ? `分析中… ${progress}` : '开始分析情绪曲线'}</button>
+    {points.length > 0 && <div className="emotion-curve">{points.map(p => <div className="emotion-curve-col" key={p.chapterId}><div className="emotion-curve-bar" style={{ height: `${Math.round((p.intensity / maxI) * 100)}%` }} title={`${p.chapterTitle}：${p.emotion} ${p.intensity}`} /><span className="emotion-curve-label">{p.emotion}</span><small>{p.chapterTitle}</small></div>)}</div>}
+    {breaks.length > 0 && <div className="plan-list"><h4>节奏断裂（{breaks.length} 处）</h4>{breaks.map((b, i) => <p key={i}>{i + 1}. 《{b.from.chapterTitle}》({b.from.intensity}) → 《{b.to.chapterTitle}》({b.to.intensity})，强度骤变 {b.delta}</p>)}</div>}
+    {!points.length && !analyzing && <div className="empty-small">点击「开始分析」逐章生成情绪曲线。</div>}
+  </section>;
+}
+
+/* 发布审查：整书级七维可增删审查 */
+function PublishReviewTab({ chapters, context, run }: { chapters: Entity[]; context: string; run(prompt: string): Promise<string> }) {
+  const app = useApp();
+  const [dims, setDims] = useState<string[]>(publishReviewDimensions.slice());
+  const [result, setResult] = useState<{ scores?: Record<string, number>; overall?: number; issues?: Issue[] } | null>(null);
+  const [raw, setRaw] = useState('');
+  const [running, setRunning] = useState(false);
+  const review = async () => {
+    if (!chapters.length) { app.notify('当前作品还没有章节'); return; }
+    if (!dims.length) { app.notify('请至少保留一个审查维度'); return; }
+    setRunning(true);
+    try {
+      const body = chapters.slice(0, 30).map(c => `${c.title}\n${c.content.slice(0, 3000)}`).join('\n\n').slice(0, 50000);
+      const response = await run(`对整部作品做发布审查（区分于章节级评审），维度：${dims.join('、')}。给每维 0-100 分、综合分、问题清单（原文证据+建议）。\n作品资料：${context}\n正文（按章截取）：\n${body}\n只返回 JSON {"scores":{"${dims.join('":0,"')}":0},"overall":0,"issues":[{"quote":"原文","dimension":"维度","reason":"问题","suggestion":"建议"}]}`);
+      if (!response) return; setRaw(response);
+      try { setResult(extractJson(response) as typeof result); } catch (e) { app.notify(String(e)); }
+    } finally { setRunning(false); }
+  };
+  return <section className="paper-page">
+    <div className="panel-heading"><h3>发布审查</h3><div className="action-row"><button className="button" onClick={() => setDims(publishReviewDimensions.slice())}>重置维度</button><button className="button primary" disabled={running} onClick={review}><Sparkles size={15} />{running ? '审查中…' : '开始整书审查'}</button></div></div>
+    <p className="muted">对作品整体质量做整书级审查，区分于逐章评审；可勾选维度。</p>
+    <div className="restriction-chips">{publishReviewDimensions.map(d => <button key={d} className={`button ${dims.includes(d) ? 'primary' : ''}`} onClick={() => setDims(xs => xs.includes(d) ? xs.filter(x => x !== d) : [...xs, d])}>{d}</button>)}</div>
+    {result?.overall != null && <strong className="score">综合分 {result.overall} / 100 · {gradeBand(result.overall).grade}</strong>}
+    {result?.scores && <div className="score-grid">{publishReviewDimensions.filter(d => dims.includes(d)).map(d => <div key={d}><span>{d}</span><strong>{result.scores?.[d] ?? '—'}</strong></div>)}</div>}
+    {result?.issues?.map((issue, i) => <div className="issue-card" key={i}><span className="tiny-label">{issue.dimension}</span><blockquote>{issue.quote}</blockquote><p>{issue.reason}</p><small>{issue.suggestion}</small></div>)}
+    {!result && raw && <pre className="raw-result">{raw}</pre>}
+  </section>;
+}
+
 /* 角色出场统计：纯计算，统计每个角色在各章节的出现次数 */
 function AppearanceTab({ workId, chapters }: { workId: string; chapters: Entity[] }) {
   const app = useApp();

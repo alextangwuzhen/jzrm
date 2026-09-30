@@ -37,6 +37,20 @@ export function gradeBand(score: number): { grade: string; hint: string } {
   return { grade: '重写', hint: '需重写' };
 }
 
+export const publishReviewDimensions = ['文风', '时间线', '伏笔', '节奏', '商业潜力', '编辑视角', '逻辑一致性'];
+
+export interface EmotionPoint { chapterId: string; chapterTitle: string; emotion: string; intensity: number }
+export interface RhythmBreak { index: number; from: EmotionPoint; to: EmotionPoint; delta: number }
+
+export function rhythmBreaks(points: EmotionPoint[], threshold = 4): RhythmBreak[] {
+  const breaks: RhythmBreak[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const delta = Math.abs(points[i].intensity - points[i - 1].intensity);
+    if (delta >= threshold) breaks.push({ index: i, from: points[i - 1], to: points[i], delta });
+  }
+  return breaks;
+}
+
 export function reviewEligibility(text: string): { eligible: boolean; score: null; reason?: string; length: number } {
   const length = text.replace(/\s/g, '').length;
   return { eligible: length >= 500, score: null, length, reason: length < 500 ? `至少需要 500 字的连续叙事文本；当前 ${length} 字。` : undefined };
