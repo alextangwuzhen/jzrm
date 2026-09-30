@@ -633,3 +633,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)!important;box
 :root[data-theme='dark'] .pipeline-step.active{background:#2a2d31!important;color:#e3e5e8!important}
 :root[data-theme='dark'] .pipeline-step.done{background:#2a2d31!important;color:#cdd0d5!important}
 :root[data-theme='dark'] .emotion-curve-col small,:root[data-theme='dark'] .appearance-total{color:#cdd0d5!important}
+
+/* 夜间主题：阅读空间 + Agent 技能树补全 */
+:root[data-theme='dark'] .reader-layout>*,
+:root[data-theme='dark'] .writing-layout>*{background:#1b1d21!important;color:#e1e3e6!important;border-color:#36393f!important}
+:root[data-theme='dark'] .reading-body,
+:root[data-theme='dark'] .reader-aside h3,
+:root[data-theme='dark'] .reader-aside p{color:#e1e3e6!important}
+:root[data-theme='dark'] .reader-diagram{background:#24272b!important;border-color:#3b3f45!important}
+:root[data-theme='dark'] .reader-diagram a,
+:root[data-theme='dark'] .reader-diagram-open,
+:root[data-theme='dark'] .reader-diagram-open span{color:#cdd0d5!important}
+:root[data-theme='dark'] .agent-type-card{background:#24272b!important;color:#bec3c8!important;border-color:#3b3f45!important}
+:root[data-theme='dark'] .agent-type-card:hover{background:#2a2d31!important}
+:root[data-theme='dark'] .agent-type-card.active{background:#2a2d31!important;color:#e3e5e8!important;border-color:#8f949b!important}
+:root[data-theme='dark'] .agent-type-card small{color:#9aa0a6!important}
