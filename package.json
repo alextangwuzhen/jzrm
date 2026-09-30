@@ -1,0 +1,45 @@
+{
+  "name": "jzrm",
+  "version": "0.1.0",
+  "description": "JZRM 小说与剧本杀创作工作台",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "start": "electron .",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "pack:mac": "npm run build && electron-builder --mac dir && codesign --force --deep --sign - release/mac-arm64/JZRM.app && codesign --verify --deep --strict release/mac-arm64/JZRM.app"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "type": "module",
+  "build": {
+    "appId": "com.jzrm.desktop",
+    "productName": "JZRM",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*", "package.json", "node_modules/**/*"],
+    "mac": { "category": "public.app-category.productivity", "target": ["dir"], "icon": "build/icon.png" }
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.12.0",
+    "docx": "^9.8.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.49.0",
+    "mammoth": "^1.13.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^44.5.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
