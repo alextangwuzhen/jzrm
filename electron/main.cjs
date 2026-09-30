@@ -133,7 +133,7 @@ async function createPdf(title, content) {
 }
 function createWindow() {
   win = new BrowserWindow({
-    width: 1440, height: 920, minWidth: 1050, minHeight: 690, title: 'JZRM',
+    width: 1440, height: 920, minWidth: 900, minHeight: 690, title: 'JZRM',
     backgroundColor: '#f4f0e8',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   });

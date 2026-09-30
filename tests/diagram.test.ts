@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {makeDiagramSvg,svgDataUrl} from '../src/diagram';
+import {makeDiagramSvg,relationshipDiagramSvg,svgDataUrl} from '../src/diagram';
 import type {Entity} from '../src/store';
 const item=(title:string,content:string,meta:Record<string,unknown>={}):Entity=>({id:title,kind:'setting',title,content,workId:'w',category:'characters',meta,createdAt:'',updatedAt:''});
 it('renders Chinese labels as SVG text and escapes source characters',()=>{
@@ -11,4 +11,11 @@ it('reads map place names from a structured imported table and orders dated even
  expect(map).toContain('北寒宫');expect(map).toContain('四部九洲');
  const timeline=makeDiagramSvg('时间轴',[item('后事','结束',{time:'羿帝21年'}),item('前事','开始',{time:'饶帝30年'})],'timeline');
  expect(timeline.indexOf('前事')).toBeLessThan(timeline.indexOf('后事'));
+});
+it('reads structured relations from character cards into edges',()=>{
+ const svg=relationshipDiagramSvg('关系图',[
+  item('小师妹','',{relations:[{target:'小师弟',relation:'同门',note:''}]}),
+  item('小师弟','')
+ ]);
+ expect(svg).toContain('小师妹');expect(svg).toContain('小师弟');expect(svg).toContain('同门');
 });

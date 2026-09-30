@@ -185,6 +185,8 @@ function ReviewWorkspace() {
   const app = useApp();
   const works = listEntities(app.state, { kind: 'work' });
   const [tab, setTab] = useState<'review' | 'edit' | 'reader' | 'zhuque'>('review');
+  const [jump, setJump] = useState<{ chapterId: string; quote: string } | null>(null);
+  const jumpToEdit = (chapterId: string, quote: string) => { setJump({ chapterId, quote }); setTab('edit'); };
   const [sourceId, setSourceId] = useState(app.workId ? `work:${app.workId}` : works[0] ? `work:${works[0].id}` : '');
   const workId = sourceId.startsWith('work:') ? sourceId.slice(5) : '';
   const chapters = listEntities(app.state, { kind: 'chapter', workId: workId || '__none__' });
@@ -206,15 +208,15 @@ function ReviewWorkspace() {
       <label>作品<select value={sourceId} onChange={e => selectSource(e.target.value)}><option value="">未选择作品</option>{works.map(w => <option key={w.id} value={`work:${w.id}`}>{w.title}</option>)}</select></label>
       <label>使用模型<select value={modelId} onChange={e => setModelId(e.target.value)}><option value="">{providers[0]?.title ?? '请先配置模型'}</option>{providers.map(p => <option key={p.id} value={p.id}>{p.title} · {String(p.meta.model ?? '')}</option>)}</select></label>
     </div>
-    {tab === 'review' && <ChapterReviewTab workId={workId} chapters={chapters} context={context} run={run} />}
-    {tab === 'edit' && <EditTab workId={workId} chapters={chapters} context={context} />}
+    {tab === 'review' && <ChapterReviewTab workId={workId} chapters={chapters} context={context} run={run} onJumpEdit={jumpToEdit} />}
+    {tab === 'edit' && <EditTab workId={workId} chapters={chapters} context={context} jump={jump} />}
     {tab === 'reader' && <ReaderSimTab chapters={chapters} context={context} />}
     {tab === 'zhuque' && <ZhuqueTab chapters={chapters} context={context} run={run} busy={busy} />}
   </>;
 }
 
 /* 审查页：StarWriter 章节评审（评审中心 + 沉浸式视图） */
-function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; chapters: Entity[]; context: string; run(prompt: string): Promise<string> }) {
+function ChapterReviewTab({ workId, chapters, context, run, onJumpEdit }: { workId: string; chapters: Entity[]; context: string; run(prompt: string): Promise<string>; onJumpEdit(chapterId: string, quote: string): void }) {
   const app = useApp();
   const reviews = listEntities(app.state, { kind: 'review', workId }).filter(r => r.parentId);
   const byChapter = new Map(reviews.map(r => [String(r.parentId), r]));
@@ -278,7 +280,7 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
             {data.aiTrace && data.aiTrace.length > 0 && <div className="review-block"><h4>痕迹分析</h4>{data.aiTrace.map((x, i) => <span key={i} className="ai-trace">{x}</span>)}</div>}
             <div className="review-block"><h4>问题明细</h4>
               {data.issues?.length ? data.issues.map((issue, i) => <div className={`issue-card severity-${issue.severity ?? '其他'}`} key={i}>
-                <div className="action-row"><span className={`tiny-label severity-badge ${issue.severity ?? '其他'}`}>{issue.severity ?? '其他'}</span><span className="tiny-label">{issue.dimension}</span><button className="text-button" onClick={() => locate(issue.quote)}>定位原文<ArrowRight size={13} /></button></div>
+                <div className="action-row"><span className={`tiny-label severity-badge ${issue.severity ?? '其他'}`}>{issue.severity ?? '其他'}</span><span className="tiny-label">{issue.dimension}</span><button className="text-button" onClick={() => locate(issue.quote)}>定位原文<ArrowRight size={13} /></button><button className="text-button" onClick={() => onJumpEdit(activeChapter?.id ?? '', issue.quote)}>去修改页三案改写<ArrowRight size={13} /></button></div>
                 <blockquote>{issue.quote}</blockquote><p>{issue.reason}</p><small>建议：{issue.suggestion}</small>
               </div>) : <div className="empty-small">本次审查未发现明细问题。</div>}
             </div>
@@ -290,7 +292,7 @@ function ChapterReviewTab({ workId, chapters, context, run }: { workId: string; 
 }
 
 /* 修改页：整篇修改 + 局部问题标注定位批注 + 三案改写弹窗 */
-function EditTab({ workId, chapters, context }: { workId: string; chapters: Entity[]; context: string }) {
+function EditTab({ workId, chapters, context, jump }: { workId: string; chapters: Entity[]; context: string; jump: { chapterId: string; quote: string } | null }) {
   const app = useApp();
   const agents = listEntities(app.state, { kind: 'agent' });
   const skills = listEntities(app.state, { kind: 'skill' });
@@ -308,6 +310,10 @@ function EditTab({ workId, chapters, context }: { workId: string; chapters: Enti
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setText(chapter?.content ?? ''); setSelectedText(''); setIssues([]); }, [chapterId, chapter?.id]);
+
+  const pendingQuote = useRef('');
+  useEffect(() => { if (jump) { setChapterId(jump.chapterId); pendingQuote.current = jump.quote; } }, [jump]);
+  useEffect(() => { const q = pendingQuote.current; if (!q) return; const idx = text.indexOf(q); if (idx < 0) return; pendingQuote.current = ''; setSelectedText(q); const el = textRef.current; if (el) { el.focus(); el.setSelectionRange(idx, idx + q.length); } }, [text]);
 
   const agent = agents.find(a => a.id === agentId);
   const agentSkill = skills.find(s => s.id === agent?.meta.skillId);
@@ -366,11 +372,12 @@ function EditTab({ workId, chapters, context }: { workId: string; chapters: Enti
     <div className="panel-heading"><h3>修改</h3><span>整篇修改 · 局部问题标注定位 · 三案改写</span></div>
     <div className="selector-strip">
       <label>章节<select value={chapterId} onChange={e => setChapterId(e.target.value)}><option value="">自定义文本</option>{chapters.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
-      <label>模型<select value={modelId || String(agent?.meta.providerId ?? '')} onChange={e => setModelId(e.target.value)}><option value="">{provider ? `${provider.title} · ${String(provider.meta.model ?? '')}` : '请先配置模型'}</option>{providers.map(p => <option key={p.id} value={p.id}>{p.title} · {String(p.meta.model ?? '')}</option>)}</select></label>
+      <label>模型<select value={modelId} onChange={e => setModelId(e.target.value)}><option value="">{agent ? `跟随 Agent（${agent.title}）` : '默认模型'}</option>{providers.map(p => <option key={p.id} value={p.id}>{p.title} · {String(p.meta.model ?? '')}</option>)}</select></label>
       <label>Agent<select value={agentId} onChange={e => setAgentId(e.target.value)}><option value="">不使用 Agent</option>{agents.map(a => <option key={a.id} value={a.id}>{a.category} · {a.title}</option>)}</select></label>
       <label>修改用 Skill<select value={skillId} onChange={e => setSkillId(e.target.value)}><option value="">不使用 Skill</option>{skills.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
     </div>
     <label>修改目标与限制<input value={focus} onChange={e => setFocus(e.target.value)} placeholder="例如：核对克制的悲伤、禁用解释式结尾" /></label>
+    <p className="muted">当前模型：{provider ? `${provider.title} · ${String(provider.meta.model ?? '')}` : '未配置'}{agent ? ` · Agent「${agent.title}」` : ''}。选 Agent 后默认跟随其绑定模型，可手动覆盖。</p>
     <textarea ref={textRef} className="source-textarea" value={text} onChange={e => setText(e.target.value)} onSelect={e => { const t = e.currentTarget; setSelectedText(t.value.slice(t.selectionStart, t.selectionEnd)); }} placeholder="选择章节或粘贴文本；选中片段后可做局部标注或三案改写。" />
     <div className="action-row" style={{ marginTop: 14 }}>
       <button className="button primary" disabled={busyEdit} onClick={fullRewrite}><WandSparkles size={16} />{busyEdit ? '生成中…' : '整篇修改'}</button>
