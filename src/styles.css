@@ -563,3 +563,73 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)!important;box
 .brand-icon{background:transparent!important;color:#1f2124!important}
 .brand-icon img{width:100%;height:100%;object-fit:cover;border-radius:10px;display:block}
 .logo-mark{background:#c9ccd1!important;color:#1f2124!important}
+
+/* ===== 夜间主题补全：覆盖本轮新增组件，避免米白底/深字看不清 ===== */
+:root[data-theme='dark'] .selector-strip,
+:root[data-theme='dark'] .foreshadow-row,
+:root[data-theme='dark'] .chapter-review-row,
+:root[data-theme='dark'] .review-immersive-body,
+:root[data-theme='dark'] .review-immersive-result,
+:root[data-theme='dark'] .split-slot-card,
+:root[data-theme='dark'] .reader-sim-card,
+:root[data-theme='dark'] .timeline-list,
+:root[data-theme='dark'] .timeline-row,
+:root[data-theme='dark'] .setting-pipeline,
+:root[data-theme='dark'] .local-scan,
+:root[data-theme='dark'] .emotion-curve,
+:root[data-theme='dark'] .canvas-panel{background:#1b1d21!important;color:#e1e3e6!important;border-color:#36393f!important}
+
+:root[data-theme='dark'] .foreshadow-stats span,
+:root[data-theme='dark'] .zhuque-dim>div,
+:root[data-theme='dark'] .chapter-spec,
+:root[data-theme='dark'] .relation-section,
+:root[data-theme='dark'] .merge-panel,
+:root[data-theme='dark'] .diff-view,
+:root[data-theme='dark'] .reader-sim-feedback,
+:root[data-theme='dark'] .skill-card-foot,
+:root[data-theme='dark'] .emotion-col{background:#24272b!important;color:#e0e2e5!important;border-color:#3b3f45!important}
+
+:root[data-theme='dark'] .appearance-bar,
+:root[data-theme='dark'] .appearance-row,
+:root[data-theme='dark'] .emotion-curve-col,
+:root[data-theme='dark'] .review-block,
+:root[data-theme='dark'] .split-reusable,
+:root[data-theme='dark'] .pipeline-steps{background:transparent!important;color:#e1e3e6!important}
+:root[data-theme='dark'] .appearance-bar{background:#2a2d31!important}
+:root[data-theme='dark'] .appearance-fill{background:linear-gradient(90deg,#8f949b,#cdd0d5)!important}
+:root[data-theme='dark'] .emotion-curve-bar{background:linear-gradient(180deg,#8f949b,#cdd0d5)!important}
+:root[data-theme='dark'] .person-node{background:#24272b!important;border-color:#8f949b!important;color:#e3e5e8!important}
+:root[data-theme='dark'] .canvas-head,:root[data-theme='dark'] .canvas-hint{border-color:#36393f!important;color:#e1e3e6!important}
+
+/* 文本颜色补全：本轮组件里显式深色文字 → 浅色 */
+:root[data-theme='dark'] .split-slot-card p,
+:root[data-theme='dark'] .reusable-row p,
+:root[data-theme='dark'] .role-row p,
+:root[data-theme='dark'] .appearance-name,
+:root[data-theme='dark'] .emotion-curve-label,
+:root[data-theme='dark'] .chapter-review-summary,
+:root[data-theme='dark'] .continuity-row p,
+:root[data-theme='dark'] .redline-row p,
+:root[data-theme='dark'] .review-deviation,
+:root[data-theme='dark'] .reader-sim-feedback p,
+:root[data-theme='dark'] .foreshadow-row textarea,
+:root[data-theme='dark'] .split-example,
+:root[data-theme='dark'] .chapter-spec>strong,
+:root[data-theme='dark'] .relation-row input{color:#d6d8dc!important}
+
+:root[data-theme='dark'] .split-slot-card,
+:root[data-theme='dark'] .reusable-row,
+:root[data-theme='dark'] .continuity-row{border-color:#36393f!important}
+:root[data-theme='dark'] .redline-row.P0,:root[data-theme='dark'] .redline-row.P1,:root[data-theme='dark'] .continuity-row{background:#202226!important;color:#e1e3e6!important}
+:root[data-theme='dark'] .reusable-row{border-left-color:#8f949b!important}
+:root[data-theme='dark'] .split-example{border-left-color:#8f949b!important}
+:root[data-theme='dark'] .diff-same{color:#d6d8dc!important}
+:root[data-theme='dark'] .diff-del{background:#2a2d31!important;color:#9aa0a6!important;text-decoration:line-through}
+:root[data-theme='dark'] .diff-ins{background:#24272b!important;color:#e1e3e6!important}
+:root[data-theme='dark'] .knowledge-cell.knows{background:#2a2d31!important;color:#e3e5e8!important}
+:root[data-theme='dark'] .knowledge-cell.unknown{background:#1a1c1f!important;color:#6b7076!important}
+:root[data-theme='dark'] .status-pill{background:#2a2d31!important;color:#e1e3e6!important}
+:root[data-theme='dark'] .pipeline-step{background:#24272b!important;color:#bec3c8!important;border-color:#3b3f45!important}
+:root[data-theme='dark'] .pipeline-step.active{background:#2a2d31!important;color:#e3e5e8!important}
+:root[data-theme='dark'] .pipeline-step.done{background:#2a2d31!important;color:#cdd0d5!important}
+:root[data-theme='dark'] .emotion-curve-col small,:root[data-theme='dark'] .appearance-total{color:#cdd0d5!important}
