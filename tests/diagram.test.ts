@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {makeDiagramSvg,relationshipDiagramSvg,svgDataUrl} from '../src/diagram';
+import {makeDiagramSvg,relationshipDiagramSvg,relationshipData,svgDataUrl} from '../src/diagram';
 import type {Entity} from '../src/store';
 const item=(title:string,content:string,meta:Record<string,unknown>={}):Entity=>({id:title,kind:'setting',title,content,workId:'w',category:'characters',meta,createdAt:'',updatedAt:''});
 it('renders Chinese labels as SVG text and escapes source characters',()=>{
@@ -18,4 +18,11 @@ it('reads structured relations from character cards into edges',()=>{
   item('小师弟','')
  ]);
  expect(svg).toContain('小师妹');expect(svg).toContain('小师弟');expect(svg).toContain('同门');
+});
+it('relationshipData returns draggable-canvas nodes and edges by entity id',()=>{
+ const a=item('小师妹','',{relations:[{target:'小师弟',relation:'同门',note:''}]});
+ const b=item('小师弟','');
+ const {nodes,edges}=relationshipData([a,b]);
+ expect(nodes.map(n=>n.title)).toEqual(['小师妹','小师弟']);
+ expect(edges).toEqual([{source:a.id,target:b.id,label:'同门'}]);
 });

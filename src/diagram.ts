@@ -81,6 +81,42 @@ export function relationshipDiagramSvg(title:string,items:Entity[]):string{
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><style>g.node{cursor:pointer}g.node rect{transition:fill .15s}g.node:hover rect{fill:#f3d9d2;stroke:#a3483d}</style><rect width="100%" height="100%" fill="#fff"/><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="#1894bd"/></marker></defs><g font-family="PingFang SC,Noto Sans CJK SC,sans-serif"><text x="70" y="65" font-size="31" font-weight="700" fill="#26343d">${escapeXml(title)}</text><text x="70" y="97" font-size="15" fill="#64727b">连线来自人物关系资料与角色档案中的人际关系；未定义的关系不推断。</text>${edges.join('')}${nodes}</g></svg>`;
 }
 
+export interface RelationNode { id: string; title: string }
+export interface RelationEdge { source: string; target: string; label: string }
+
+/** 从人物卡与关系资料提取可拖拽画布用节点/边（用实体 id 定位）。 */
+export function relationshipData(items: Entity[]): { nodes: RelationNode[]; edges: RelationEdge[] } {
+  const cards = items.filter(item => !item.meta.imageData && !['人物档案', '人物关系'].includes(item.title)).slice(0, 40);
+  const names = cards.map(c => c.title);
+  const edges: RelationEdge[] = [];
+  const edgeKeys = new Set<string>();
+  const addEdge = (a: number, b: number, label: string) => {
+    if (a < 0 || b < 0 || a === b) return;
+    const key = [a, b].sort((x, y) => x - y).join('-');
+    if (edgeKeys.has(key)) return;
+    edgeKeys.add(key);
+    edges.push({ source: cards[a].id, target: cards[b].id, label: label || '关系' });
+  };
+  const docRelations = items.filter(item => item.title.includes('关系')).flatMap(item => item.content.split('\n'));
+  for (const line of docRelations) {
+    if (!/^(?:CP\s*[一二三四五六七八九十\d]+|父女|父子|母女|母子|师徒|同门|旧情|好友|仇敌|依存与交易)[：:]/.test(line.trim())) continue;
+    const hits = names.map((name, i) => line.includes(name) ? i : -1).filter(i => i >= 0);
+    if (hits.length !== 2) continue;
+    addEdge(hits[0], hits[1], line.split(/[：:]/)[0]);
+  }
+  for (const card of cards) {
+    const rels = card.meta.relations;
+    if (!Array.isArray(rels)) continue;
+    for (const r of rels) {
+      const target = String((r as Record<string, unknown>).target ?? '');
+      const relation = String((r as Record<string, unknown>).relation ?? '');
+      if (!target) continue;
+      addEdge(names.indexOf(card.title), names.indexOf(target), relation || '关系');
+    }
+  }
+  return { nodes: cards.map(c => ({ id: c.id, title: c.title })), edges };
+}
+
 export function timelineDiagramSvg(title:string,events:Entity[]):string{
   const ordered=events.filter(event=>!event.meta.imageData).slice(0,18);
   const width=Math.max(1300,ordered.length*235+120),height=650;

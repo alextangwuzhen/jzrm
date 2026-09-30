@@ -6,6 +6,7 @@ import { modelFromProvider, pickModel, workContext } from './ai';
 import { platform } from './platform';
 import { relationshipDiagramSvg, svgDataUrl } from './diagram';
 import { DiagramViewer } from './DiagramViewer';
+import { RelationshipCanvas } from './RelationshipCanvas';
 import {
   characterBrief, characterSummary, emptyProfile, isCharacterCard,
   readGroup, readProfile, readRelations,
@@ -27,6 +28,7 @@ export function CharactersPage({ work }: { work: Entity }) {
   const [busy, setBusy] = useState('');
   const [viewing, setViewing] = useState('');
   const [mergePanel, setMergePanel] = useState(false);
+  const [canvasOpen, setCanvasOpen] = useState(false);
 
   const groups = useMemo(() => ['未分组', ...Array.from(new Set(cards.map(c => readGroup(c.meta)))).filter(g => g !== '未分组')], [cards]);
   const filtered = cards.filter(c => {
@@ -135,7 +137,8 @@ export function CharactersPage({ work }: { work: Entity }) {
         <p className="muted">分类、搜索与管理角色档案，含人际关系与人物图片；图片文字由本地排版，避免模型拼错汉字。</p>
       </div>
       <div className="action-row">
-        <button className="button" disabled={Boolean(busy)} onClick={drawDiagram}><Sparkles size={15} />{busy === 'diagram' ? '绘制中…' : '绘制人物关系图'}</button>
+        <button className="button" onClick={() => setCanvasOpen(true)}><UsersRound size={15} />关系画布</button>
+        <button className="button" disabled={Boolean(busy)} onClick={drawDiagram}><Sparkles size={15} />{busy === 'diagram' ? '绘制中…' : '导出关系图'}</button>
         <button className="button" onClick={() => setMergePanel(v => !v)}><UsersRound size={15} />合并分类</button>
         <button className="button primary" onClick={openAdd}><Plus size={15} />添加角色</button>
       </div>
@@ -174,6 +177,7 @@ export function CharactersPage({ work }: { work: Entity }) {
       onSave={saveEditor} onCancel={() => setEditor(null)} />}
 
     {figures.find(f => f.id === viewing) && <DiagramViewer src={String(figures.find(f => f.id === viewing)!.meta.imageData)} title={figures.find(f => f.id === viewing)!.title} onClose={() => setViewing('')} />}
+    {canvasOpen && <RelationshipCanvas work={work} items={all} onClose={() => setCanvasOpen(false)} />}
   </>;
 }
 
