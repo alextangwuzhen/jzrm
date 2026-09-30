@@ -1,4 +1,5 @@
 export type ImportedSetting={kind:'setting'|'memory'|'outline';category:string;title:string;content:string;meta?:Record<string,unknown>};
+import { detectForeshadowStatus } from './foreshadow';
 const sections:[RegExp,ImportedSetting['kind'],string,string][]=[
  [/^brief（作品简介）$/m,'outline','总纲','作品简介'],
  [/^characters（人物）$/m,'setting','characters','人物档案'],
@@ -6,6 +7,7 @@ const sections:[RegExp,ImportedSetting['kind'],string,string][]=[
  [/^places（地点）$/m,'setting','map','地点资料'],
  [/^facts（世界规则 \/ 设定事实）$/m,'setting','world','世界规则与事实'],
  [/^timeline（时间线）$/m,'setting','timeline','事件时间线'],
+ [/^foreshadow（伏笔）$/m,'setting','foreshadow','伏笔追踪'],
  [/^emotion（情绪线）$/m,'setting','emotion','情绪线'],
  [/^routes（卷次结构）$/m,'outline','卷纲','卷次结构'],
  [/^styles（文风卡）$/m,'setting','style','文风卡'],
@@ -18,6 +20,7 @@ const chineseSections:[RegExp,ImportedSetting['kind'],string,string][]=[
  [/^写法介绍\s*$/m,'setting','style','文风写法'],
  [/^世界规则[：:]?\s*$/m,'setting','world','世界规则与事实'],
  [/^时间线[：:]?\s*$/m,'setting','timeline','事件时间线'],
+ [/^伏笔[：:]?\s*$/m,'setting','foreshadow','伏笔追踪'],
  [/^设定补足\s*$/m,'setting','world','设定补足'],
  [/^内容灵感碎片[：:]?\s*$/m,'outline','总纲','内容灵感碎片'],
  [/^《[^》]+》文风卡[^\n]*$/m,'setting','style','作品文风卡']
@@ -28,6 +31,11 @@ export function parseSettingDocument(text:string):ImportedSetting[]{
  if(!found.length)return [{kind:'setting',category:'world',title:'导入设定原文',content:text}];
  return found.flatMap((item,i)=>{
   const content=text.slice(item.index,found[i+1]?.index??text.length).trim();
+  if(item.category==='foreshadow'){
+   const lines=content.split(/\n+/).map(line=>line.trim()).filter(line=>line && !/^伏笔[：:]?$/.test(line) && !/^伏笔追踪[：:]?$/.test(line) && !line.endsWith('：') && !line.endsWith(':'));
+   const entries:ImportedSetting[]=lines.map(line=>({kind:item.kind,category:item.category,title:line.slice(0,24),content:line,meta:{status:detectForeshadowStatus(line),plantChapter:'',revealChapter:''}}));
+   return entries.length?entries:[{kind:item.kind,category:item.category,title:item.title,content}];
+  }
   if(item.category!=='timeline')return [{kind:item.kind,category:item.category,title:item.title,content}];
   const lines=content.split(/\n+/).map(line=>line.trim()).filter(Boolean);
   const events:ImportedSetting[]=[];

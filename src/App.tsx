@@ -16,6 +16,7 @@ import { syncInspiration } from './inspirationSync';
 import { migrateLegacyDiagrams } from './diagramMigration';
 import { seedRestrictions } from './restrictions';
 import { migrateSettingCards } from './cardsMigration';
+import { APP_VERSION } from './version';
 
 const mainLinks = [
   ['/', '首页', Home], ['/library', '作品库', LibraryBig], ['/reader', '阅读空间', BookOpen], ['/split', '作品拆解', BookText],
@@ -82,11 +83,11 @@ export default function App() {
   const pageTitle = work ? `${work.title} · ${({ body: '正文', outline: '大纲', settings: '设定', memory: '记忆', 'fine-outline': '细纲' } as Record<string, string>)[parsed.page] ?? parsed.page}` : mainLinks.find(([url]) => url === `/${parsed.page}`)?.[1] ?? ({workflow:'创作流程',help:'使用说明',settings:'设置',search:'搜索工作台'} as Record<string,string>)[parsed.page] ?? '创作工作台';
   const works = listEntities(state, { kind: 'work' });
 
-  if (!ready) return <div className="loading-screen"><span className="logo-mark">J</span><p>正在打开 JZRM…</p></div>;
+  if (!ready) return <div className="loading-screen"><span className="logo-mark">J</span><p>正在打开 JZRM · {APP_VERSION}…</p></div>;
   return <AppContext.Provider value={ctx}>
     <div className={`app-shell ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
       <aside className="sidebar">
-        <div className="brand"><div className="brand-icon"><img src={new URL('./jzrm-icon.png',import.meta.url).href} alt="金毛剪影" /></div><div><strong>JZRM</strong><small>故事与剧本创作空间</small></div><button className="icon-button sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} title={sidebarOpen?'收起侧栏':'展开侧栏'} aria-label={sidebarOpen?'收起侧栏':'展开侧栏'}><ChevronDown size={16}/></button></div>
+        <div className="brand"><div className="brand-icon"><img src={new URL('./jzrm-icon.png',import.meta.url).href} alt="金毛剪影" /></div><div><strong>JZRM</strong><small>故事与剧本创作空间 · {APP_VERSION}</small></div><button className="icon-button sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} title={sidebarOpen?'收起侧栏':'展开侧栏'} aria-label={sidebarOpen?'收起侧栏':'展开侧栏'}><ChevronDown size={16}/></button></div>
         <button className="search-shortcut" onClick={() => navigate('/search')}><Search size={15}/><span>搜索工作台</span><kbd>⌘K</kbd></button>
         {work ? <><div className="sidebar-group-label">当前作品</div><button className="work-back" onClick={() => navigate('/library')}><ChevronRight size={16} className="rotate-180"/>返回作品库</button><div className="work-title-mini">{work.title}</div><button className="sidebar-section" onClick={() => setWorkMenuOpen(!workMenuOpen)}><span>创作工作区</span>{workMenuOpen ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}</button>{workMenuOpen && workLinks.map(([key, label, Icon]) => <button key={key} className={`nav-item sub-item ${parsed.page === key ? 'active' : ''}`} onClick={() => navigate(routeFor(work.id, key))}><Icon size={17}/><span>{label}</span></button>)}<div className="sidebar-group-label">作品工具</div><button className="nav-item sub-item" onClick={() => navigate(`/review?work=${work.id}`)}><ChartNoAxesCombined size={17}/>审查修改</button><button className="nav-item sub-item" onClick={() => navigate(`/adaptation?work=${work.id}`)}><Clapperboard size={17}/>剧本杀改编</button></> : <><div className="sidebar-group-label">主菜单</div>{mainLinks.map(([url, label, Icon]) => <button key={url} className={`nav-item ${route.split('?')[0] === url ? 'active' : ''}`} onClick={() => navigate(url)}><Icon size={18}/><span>{label}</span></button>)}</>}
         <div className="sidebar-bottom"><button onClick={() => navigate('/workflow')}><Workflow size={17}/>创作流程</button><button onClick={() => navigate('/settings')}><Settings2 size={17}/>设置</button></div>

@@ -1,6 +1,6 @@
 {
   "name": "jzrm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "JZRM 小说与剧本杀创作工作台",
   "main": "electron/main.cjs",
   "scripts": {

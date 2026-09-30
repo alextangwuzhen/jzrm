@@ -17,3 +17,11 @@ it('recognizes Chinese headings and inline dated events in an imported inspirati
  expect(result.map(x=>x.category)).toEqual(['总纲','characters','world','timeline','world']);
  expect(result[3]).toMatchObject({title:'大羿射杀金乌族。',meta:{time:'饶帝30年'}});
 });
+it('splits a foreshadow section into per-line entries and syncs status on import',()=>{
+ const result=parseSettingDocument('伏笔：\n小师妹的真实身份\n后期揭示甲的动机\n该支线废弃');
+ const entries=result.filter(x=>x.category==='foreshadow');
+ expect(entries).toHaveLength(3);
+ expect(entries[0]).toMatchObject({title:'小师妹的真实身份',meta:{status:'埋设'}});
+ expect(entries[1].meta?.status).toBe('揭示');
+ expect(entries[2].meta?.status).toBe('废弃');
+});

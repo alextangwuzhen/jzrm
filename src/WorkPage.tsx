@@ -10,6 +10,8 @@ import { WorldPage } from './WorldPage';
 import { EmotionPage } from './EmotionPage';
 import { TimelinePage } from './TimelinePage';
 import { SettingCardsPage } from './SettingCardsPage';
+import { CharactersPage } from './CharactersPage';
+import { ForeshadowPage } from './ForeshadowPage';
 import { DiagramViewer } from './DiagramViewer';
 
 const labels: Record<string, string> = {
@@ -26,7 +28,7 @@ export function WorkPageView({ work, page, category }: { work: Entity; page: str
   if (page === 'fine-outline') return <StructuredPage work={work} kind="fineOutline" title="小说大纲" subtitle="从总纲逐级展开到章节细纲。"/>;
   if (page === 'settings') {
     const selected = settingCategories.includes(category as typeof settingCategories[number]) ? category! : 'overview';
-    return <><PageIntro title="作品设定" subtitle="人物、情绪、背景、地图、时间线分级管理，创作时自动取用同一作品的资料。" action={<div className="action-row"><button className="button" onClick={importSettings}><FilePlus2 size={16}/>导入设定文档</button><button className="button" onClick={() => app.openAi(`请从当前作品「${work.title}」的正文提炼人物、情绪、背景、地点和时间线。先列候选事实与原文证据，不要直接写入设定。`)}><Sparkles size={16}/>AI 提炼</button></div>}/><div className="category-tabs">{settingCategories.map(key => <button key={key} className={selected === key ? 'selected' : ''} onClick={() => app.navigate(routeFor(work.id, 'settings', key))}>{labels[key]}</button>)}</div>{selected === 'overview' ? <SettingsOverview work={work}/> : selected==='world'?<WorldPage work={work}/>:selected==='emotion'?<EmotionPage work={work}/>:selected==='timeline'?<TimelinePage work={work}/>:selected==='characters'||selected==='map'?<SettingCardsPage work={work} type={selected}/>:<Collection work={work} kind="setting" category={selected} title={labels[selected]} hint={settingHint(selected)}/>}</>;
+    return <><PageIntro title="作品设定" subtitle="人物、情绪、背景、地图、时间线分级管理，创作时自动取用同一作品的资料。" action={<div className="action-row"><button className="button" onClick={importSettings}><FilePlus2 size={16}/>导入设定文档</button><button className="button" onClick={() => app.openAi(`请从当前作品「${work.title}」的正文提炼人物、情绪、背景、地点和时间线。先列候选事实与原文证据，不要直接写入设定。`)}><Sparkles size={16}/>AI 提炼</button></div>}/><div className="category-tabs">{settingCategories.map(key => <button key={key} className={selected === key ? 'selected' : ''} onClick={() => app.navigate(routeFor(work.id, 'settings', key))}>{labels[key]}</button>)}</div>{selected === 'overview' ? <SettingsOverview work={work}/> : selected==='world'?<WorldPage work={work}/>:selected==='emotion'?<EmotionPage work={work}/>:selected==='timeline'?<TimelinePage work={work}/>:selected === 'characters' ? <CharactersPage work={work}/> : selected === 'map' ? <SettingCardsPage work={work} type="map"/> : selected === 'foreshadow' ? <ForeshadowPage work={work}/> : <Collection work={work} kind="setting" category={selected} title={labels[selected]} hint={settingHint(selected)}/>}</>;
   }
   if (page === 'memory') {
     const selected = memoryCategories.includes(category ?? '') ? category! : 'facts';
