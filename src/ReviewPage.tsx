@@ -212,7 +212,7 @@ function ReviewWorkspace() {
       <label>作品<select value={sourceId} onChange={e => selectSource(e.target.value)}><option value="">未选择作品</option>{works.map(w => <option key={w.id} value={`work:${w.id}`}>{w.title}</option>)}</select></label>
       <label>使用模型<select value={modelId} onChange={e => setModelId(e.target.value)}><option value="">{providers[0]?.title ?? '请先配置模型'}</option>{providers.map(p => <option key={p.id} value={p.id}>{p.title} · {String(p.meta.model ?? '')}</option>)}</select></label>
     </div>
-    {tab === 'review' && <ChapterReviewTab workId={workId} chapters={chapters} context={context} run={run} onJumpEdit={jumpToEdit} />}
+    {tab === 'review' && <ChapterReviewTab workId={workId} chapters={chapters} run={run} onJumpEdit={jumpToEdit} />}
     {tab === 'edit' && <EditTab workId={workId} chapters={chapters} context={context} jump={jump} />}
     {tab === 'reader' && <ReaderSimTab chapters={chapters} context={context} />}
     {tab === 'zhuque' && <ZhuqueTab chapters={chapters} context={context} run={run} busy={busy} />}
@@ -223,7 +223,7 @@ function ReviewWorkspace() {
 }
 
 /* 审查页：StarWriter 章节评审（评审中心 + 沉浸式视图） */
-function ChapterReviewTab({ workId, chapters, context, run, onJumpEdit }: { workId: string; chapters: Entity[]; context: string; run(prompt: string): Promise<string>; onJumpEdit(chapterId: string, quote: string): void }) {
+function ChapterReviewTab({ workId, chapters, run, onJumpEdit }: { workId: string; chapters: Entity[]; run(prompt: string): Promise<string>; onJumpEdit(chapterId: string, quote: string): void }) {
   const app = useApp();
   const reviews = listEntities(app.state, { kind: 'review', workId }).filter(r => r.parentId);
   const byChapter = new Map(reviews.map(r => [String(r.parentId), r]));
@@ -239,7 +239,7 @@ function ChapterReviewTab({ workId, chapters, context, run, onJumpEdit }: { work
     if (busyChapter) return;
     const roleSpec = reviewRoles.map(r => `${r.role}(${Math.round(r.weight * 100)}%)看${roleFocus[r.role]}`).join('；');
     const redSpec = redlineRules.map(r => `${r.level}·${r.rule}`).join('；');
-    const prompt = `你是小说审校团，按 5 个角色分别评审本章，再按权重合成综合分。${roleSpec}。\n另给${reviewDimensions.join('、')}六维分。\n对照作品资料（大纲/细纲/设定/伏笔）做连贯性检查：本章目标、要埋的钩子、人物前后状态、要回收的伏笔，逐条指出「预期 vs 实际」的偏差。\n红线命中：${redSpec}。\n评分档位：90-100精品 / 85-89优秀可发 / 75-84良好小改可发 / 60-74合格需改 / <60重写。材料不足时降低综合分并说明缺口。\n作品资料：\n${context}\n章节：\n${chapter.content}\n只返回 JSON: {"overall":0,"grade":"档位","gradeHint":"可发/小改可发/需改/重写","scores":{"${reviewDimensions.join('":0,"')}":0},"roles":[{"role":"阅读者","weight":0.25,"score":0,"opinion":"意见","quote":"原文证据"}],"redlines":[{"level":"P0","rule":"规则","quote":"原文","reason":"原因","suggestion":"建议"}],"continuity":[{"kind":"人物状态/钩子/伏笔/目标","expect":"预期","actual":"实际","quote":"原文","suggestion":"建议"}],"summary":"综述","deviations":["设定偏离"],"aiTrace":["AI痕迹"],"issues":[{"severity":"严重","quote":"原文证据","dimension":"维度","reason":"问题","suggestion":"建议"}]}`;
+    const prompt = `你是小说审校团，按 5 个角色分别评审本章，再按权重合成综合分。${roleSpec}。\n另给${reviewDimensions.join('、')}六维分。\n对照作品资料（大纲/细纲/设定/伏笔）做连贯性检查：本章目标、要埋的钩子、人物前后状态、要回收的伏笔，逐条指出「预期 vs 实际」的偏差。\n红线命中：${redSpec}。\n评分档位：90-100精品 / 85-89优秀可发 / 75-84良好小改可发 / 60-74合格需改 / <60重写。材料不足时降低综合分并说明缺口。\n作品资料（已按本章角色/伏笔/事件精准取用）：\n${workContext(app.state.entities, workId, app.state.preferences.contextLimit, { chapterId: chapter.id, chapterText: chapter.content })}\n章节：\n${chapter.content}\n只返回 JSON: {"overall":0,"grade":"档位","gradeHint":"可发/小改可发/需改/重写","scores":{"${reviewDimensions.join('":0,"')}":0},"roles":[{"role":"阅读者","weight":0.25,"score":0,"opinion":"意见","quote":"原文证据"}],"redlines":[{"level":"P0","rule":"规则","quote":"原文","reason":"原因","suggestion":"建议"}],"continuity":[{"kind":"人物状态/钩子/伏笔/目标","expect":"预期","actual":"实际","quote":"原文","suggestion":"建议"}],"summary":"综述","deviations":["设定偏离"],"aiTrace":["AI痕迹"],"issues":[{"severity":"严重","quote":"原文证据","dimension":"维度","reason":"问题","suggestion":"建议"}]}`;
     setBusyChapter(chapter.id);
     try { const response = await run(prompt); if (!response) return; app.add('review', `${chapter.title} · 审查`, response, { workId: workId || undefined, parentId: chapter.id, meta: { createdAt: new Date().toISOString() } }); app.notify(`已评审《${chapter.title}》`); } finally { setBusyChapter(''); }
   };

@@ -237,6 +237,51 @@ app.whenReady().then(() => {
     await atomicJson(dataPath(), state); return state;
   });
   ipcMain.handle('app:version', event => { validSender(event); return app.getVersion(); });
+  const GIST_DESC = 'jzrm-cloud-sync';
+  const GIST_FILE = 'jzrm-state.json';
+  async function gistRequest(method, path, token, body) {
+    const response = await fetch(`https://api.github.com${path}`, {
+      method, signal: AbortSignal.timeout(20000),
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'JZRM' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!response.ok) throw new Error(`GitHub 同步失败 ${response.status}: ${String(((await response.json().catch(() => ({}))) || {}).message ?? '').slice(0, 200)}`);
+    return response.json();
+  }
+  async function findGist(token) {
+    const list = await gistRequest('GET', '/gists?per_page=100', token);
+    return (Array.isArray(list) ? list : []).find(g => g && (g.description === GIST_DESC || (g.files && GIST_FILE in g.files)));
+  }
+  ipcMain.handle('sync:push', async (event, state) => {
+    validSender(event);
+    if (!state || state.version !== 1 || !Array.isArray(state.entities)) throw new Error('INVALID_STATE');
+    const token = await getKey('sync:github');
+    const body = { description: GIST_DESC, public: false, files: { [GIST_FILE]: { content: JSON.stringify(state) } } };
+    const existing = await findGist(token);
+    const gist = existing ? await gistRequest('PATCH', `/gists/${existing.id}`, token, body) : await gistRequest('POST', '/gists', token, body);
+    return { id: String(gist.id ?? ''), at: new Date().toISOString() };
+  });
+  ipcMain.handle('sync:pull', async event => {
+    validSender(event);
+    const token = await getKey('sync:github');
+    const gist = await findGist(token);
+    if (!gist) throw new Error('云端还没有同步记录');
+    const detail = await gistRequest('GET', `/gists/${gist.id}`, token);
+    const file = detail?.files?.[GIST_FILE];
+    let content = typeof file?.content === 'string' ? file.content : '';
+    if (!content && typeof file?.raw_url === 'string') content = await (await fetch(file.raw_url, { signal: AbortSignal.timeout(15000) })).text();
+    if (!content) throw new Error('云端文件为空');
+    const parsed = JSON.parse(content);
+    if (parsed.version !== 1 || !Array.isArray(parsed.entities)) throw new Error('云端数据格式不正确');
+    return parsed;
+  });
+  ipcMain.handle('sync:status', async event => {
+    validSender(event);
+    const hasToken = Boolean((await readJson(keyPath(), {}))['sync:github']);
+    if (!hasToken) return { configured: false, syncedAt: null };
+    try { const gist = await findGist(await getKey('sync:github')); return { configured: true, syncedAt: gist ? String(gist.updated_at ?? null) : null }; }
+    catch { return { configured: true, syncedAt: null }; }
+  });
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

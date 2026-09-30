@@ -19,5 +19,8 @@ contextBridge.exposeInMainWorld('jzrm', {
   exportFile: input => ipcRenderer.invoke('file:export', input),
   backup: () => ipcRenderer.invoke('state:backup'),
   restoreBackup: () => ipcRenderer.invoke('state:restore'),
+  cloudPush: state => ipcRenderer.invoke('sync:push', state),
+  cloudPull: () => ipcRenderer.invoke('sync:pull'),
+  cloudStatus: () => ipcRenderer.invoke('sync:status'),
   appVersion: () => ipcRenderer.invoke('app:version')
 });

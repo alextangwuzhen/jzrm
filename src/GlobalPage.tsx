@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Lightbulb, Plus, Search, Sparkles, Trash2, Upload, RotateCcw } from 'lucide-react';
 import { useApp } from './context';
 import { listEntities, type Entity, type EntityKind } from './store';
@@ -43,7 +43,7 @@ function HelpPage() {
 function SettingsPage({category}:{category?:string}) {
   const app=useApp();
   const selected=category??'guide';
-  const sections=[['guide','使用说明'],['theme','主题设置'],['memory','固定记忆区'],['compression','压缩设置']];
+  const sections=[['guide','使用说明'],['theme','主题设置'],['memory','固定记忆区'],['compression','压缩设置'],['cloud','云同步']];
   const memories=listEntities(app.state,{kind:'memory'}).filter(e=>!e.workId);
   const setPreference=(patch:Partial<typeof app.state.preferences>)=>app.replaceState({...app.state,preferences:{...app.state.preferences,...patch}});
   return <><SectionHead overline="PREFERENCES / JZRM" title="设置" subtitle="调整外观、固定记忆和 AI 上下文长度。"/><div className="category-tabs">{sections.map(([key,label])=><button key={key} className={selected===key?'selected':''} onClick={()=>app.navigate(`/settings/${key}`)}>{label}</button>)}</div>
@@ -51,7 +51,28 @@ function SettingsPage({category}:{category?:string}) {
     {selected==='theme'&&<section className="paper-page"><h3>主题设置</h3><p>日间米白与灰，夜间黑与银。切换后自动保存。</p><div className="theme-options"><button className={`theme-choice daylight ${app.state.preferences.theme!=='dark'?'selected':''}`} onClick={()=>setPreference({theme:'light'})}><span className="theme-preview"/><strong>日间 · 米白 + 灰</strong><small>柔和纸面与磨砂玻璃按钮</small></button><button className={`theme-choice nightlight ${app.state.preferences.theme==='dark'?'selected':''}`} onClick={()=>setPreference({theme:'dark'})}><span className="theme-preview"/><strong>夜间 · 黑 + 银</strong><small>深色画布与银色高光</small></button></div></section>}
     {selected==='memory'&&<section className="paper-page"><div className="panel-heading"><h3>固定记忆区</h3><button className="button primary" onClick={async()=>{const name=await app.ask('固定记忆名称');if(name)app.add('memory',name,'',{category:'learned'});}}>添加记忆</button></div><p>这些规则会进入所有作品的 AI 上下文，可随时编辑或移入垃圾箱。</p>{memories.map(item=><div className="model-card" key={item.id}><div className="card-top"><input value={item.title} onChange={e=>app.update(item.id,{title:e.target.value})}/><button className="icon-button danger" onClick={()=>app.trash(item.id)}><Trash2 size={15}/></button></div><textarea value={item.content} onChange={e=>app.update(item.id,{content:e.target.value})}/></div>)}{!memories.length&&<div className="empty-small">还没有固定记忆。</div>}</section>}
     {selected==='compression'&&<section className="paper-page"><h3>压缩设置</h3><p>设定发送给 AI 的作品资料上限。超过上限时从末尾截断，优先把最重要的事实与限制写在资料前部。</p><label>上下文资料字数上限<input type="number" min="3000" max="100000" step="1000" value={app.state.preferences.contextLimit??30000} onChange={e=>setPreference({contextLimit:Math.max(3000,Math.min(100000,Number(e.target.value)||3000))})}/></label><p className="muted">当前上限：{(app.state.preferences.contextLimit??30000).toLocaleString()} 字。原始作品内容不会被删改。</p></section>}
+    {selected==='cloud'&&<CloudSync/>}
   </>;
+}
+
+function CloudSync() {
+  const app = useApp();
+  const [token, setToken] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<{ configured: boolean; syncedAt: string | null }>({ configured: false, syncedAt: null });
+  useEffect(() => { platform().cloudStatus().then(setStatus).catch(() => {}); }, []);
+  const saveToken = async () => {
+    if (!token.trim()) { app.notify('请输入 GitHub Token'); return; }
+    try { await platform().saveKey('sync:github', token.trim()); setToken(''); setStatus(await platform().cloudStatus()); app.notify('GitHub Token 已保存'); } catch (e) { app.notify(String(e)); }
+  };
+  const push = async () => { setBusy(true); try { const r = await platform().cloudPush(app.state); setStatus({ configured: true, syncedAt: r.at }); app.notify(`已同步到云端 ${new Date(r.at).toLocaleString('zh-CN')}`); } catch (e) { app.notify(String(e)); } finally { setBusy(false); } };
+  const pull = async () => { if (!await app.confirm('从云端恢复会替换当前全部作品、章节、设定和配置。继续吗？')) return; setBusy(true); try { app.replaceState(await platform().cloudPull()); app.notify('已从云端恢复'); app.navigate('/library'); } catch (e) { app.notify(String(e)); } finally { setBusy(false); } };
+  return <section className="paper-page"><h3>云同步（GitHub Gist）</h3>
+    <p className="muted">用你的 GitHub Token 把作品数据同步为私有 Gist（文件 jzrm-state.json）。Token 存于 macOS 钥匙串，同步时按需上传正文与设定，不包含 API 密钥。</p>
+    <label>GitHub Token<input type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="ghp_...（需勾选 gist 权限）" /></label>
+    <div className="action-row" style={{ marginTop: 12 }}><button className="button" onClick={saveToken}>保存 Token</button><button className="button primary" disabled={busy || !status.configured} onClick={push}>{busy ? '同步中…' : '立即同步到云端'}</button><button className="button" disabled={busy || !status.configured} onClick={pull}>{busy ? '恢复中…' : '从云端恢复'}</button></div>
+    <p className="muted" style={{ marginTop: 10 }}>状态：{status.configured ? (status.syncedAt ? `已配置，最近同步 ${new Date(status.syncedAt).toLocaleString('zh-CN')}` : '已配置 Token，尚未同步') : '尚未配置 GitHub Token'}。</p>
+  </section>;
 }
 
 function SectionHead({ overline, title, subtitle, action }: { overline: string; title: string; subtitle: string; action?: React.ReactNode }) {

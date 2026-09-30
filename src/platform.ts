@@ -21,6 +21,9 @@ export interface PlatformApi {
   exportFile(input: { title: string; content: string; format: 'txt' | 'docx' | 'pdf' }): Promise<string | null>;
   backup(): Promise<string | null>;
   restoreBackup(): Promise<AppState | null>;
+  cloudPush(state: AppState): Promise<{ id: string; at: string }>;
+  cloudPull(): Promise<AppState>;
+  cloudStatus(): Promise<{ configured: boolean; syncedAt: string | null }>;
   appVersion(): Promise<string>;
 }
 
@@ -45,6 +48,9 @@ const browserFallback: PlatformApi = {
   async exportFile(input) { const blob = new Blob([input.content], { type: 'text/plain;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${input.title}.txt`; a.click(); URL.revokeObjectURL(a.href); return a.download; },
   async backup() { throw new Error('请在桌面 App 中备份'); },
   async restoreBackup() { throw new Error('请在桌面 App 中恢复备份'); },
+  async cloudPush() { throw new Error('请在桌面 App 中使用云同步'); },
+  async cloudPull() { throw new Error('请在桌面 App 中使用云同步'); },
+  async cloudStatus() { return { configured: false, syncedAt: null }; },
   async appVersion() { return '开发预览'; }
 };
 
