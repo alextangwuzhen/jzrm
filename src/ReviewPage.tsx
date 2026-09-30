@@ -8,6 +8,9 @@ import { createRewriteProposal, reviewDimensions, reviewEligibility, reviewRoles
 import { splitImportedChapters } from './importedChapters';
 import { restrictionTypes } from './restrictions';
 import { readerPerspectives } from './readerAgents';
+import { scanAiTraces } from './aiTrace';
+import { radarSvg } from './diagram';
+import { diffChars } from './diff';
 
 type Issue = { severity?: string; quote: string; dimension: string; reason: string; suggestion: string };
 type ChapterReview = { overall?: number; grade?: string; gradeHint?: string; scores?: Record<string, number>; roles?: ReviewRole[]; redlines?: ReviewRedline[]; continuity?: ReviewContinuity[]; summary?: string; deviations?: string[]; aiTrace?: string[]; issues?: Issue[] };
@@ -73,6 +76,7 @@ function PolishPage() {
   const [modelId, setModelId] = useState(String(initialDraft.current.modelId ?? ''));
   const [busy, setBusy] = useState(false);
   const [variants, setVariants] = useState<string[]>(Array.isArray(initialDraft.current.variants) ? initialDraft.current.variants as string[] : []);
+  const [diffOn, setDiffOn] = useState(false);
   const [mode, setMode] = useState(String(initialDraft.current.mode ?? polishModes[0]));
   const [skillId, setSkillId] = useState(String(initialDraft.current.skillId ?? ''));
   const [styleId, setStyleId] = useState<string | null>(initialDraft.current.styleId == null ? null : String(initialDraft.current.styleId));
@@ -170,7 +174,7 @@ function PolishPage() {
 
     <section className="paper-page">
       <div className="panel-heading"><h3>润笔提案</h3></div>
-      {variants.length > 0 && <div className="variant-list"><h4>修改预览</h4>{variants.map((variant, i) => <div key={i} className="variant-card"><span>方案 {i + 1}</span><p>{variant}</p><button className="button primary" onClick={() => applyVariant(variant)}><Check size={15} />替换原文</button></div>)}</div>}
+      {variants.length > 0 && <div className="variant-list"><h4>修改预览</h4>{variants.map((variant, i) => <div key={i} className="variant-card"><span>方案 {i + 1}</span><p>{variant}</p><button className="button primary" onClick={() => applyVariant(variant)}><Check size={15} />替换原文</button></div>)}{variants.length === 1 && <button className="button" onClick={() => setDiffOn(v => !v)}>{diffOn ? '收起对比' : '对比改动（红删绿增）'}</button>}{diffOn && variants.length === 1 && <DiffView before={text} after={variants[0]} />}</div>}
       {!variants.length && <div className="empty-small">选择润笔任务。AI 结果先在这里预览，再决定是否应用。</div>}
     </section>
   </div>
@@ -278,6 +282,7 @@ function ChapterReviewTab({ workId, chapters, context, run, onJumpEdit }: { work
             {data.roles && data.roles.length > 0 && <div className="review-block"><h4>五角色加权评审</h4>{data.roles.map((r, i) => <div className="role-row" key={i}><span className="role-name">{r.role}（{Math.round(r.weight * 100)}%）</span><strong className="role-score">{r.score}</strong><p>{r.opinion}</p>{r.quote && <button className="text-button" onClick={() => locate(r.quote)}>定位<ArrowRight size={12} /></button>}</div>)}</div>}
             {data.redlines && data.redlines.length > 0 && <div className="review-block"><h4>红线命中</h4>{data.redlines.map((r, i) => <div className={`redline-row ${r.level}`} key={i}><span className={`tiny-label severity-badge ${r.level === 'P0' ? '严重' : '轻微'}`}>{r.level}</span><strong>{r.rule}</strong><button className="text-button" onClick={() => locate(r.quote)}>定位<ArrowRight size={12} /></button><blockquote>{r.quote}</blockquote><p>{r.reason}</p><small>建议：{r.suggestion}</small></div>)}</div>}
             {data.continuity && data.continuity.length > 0 && <div className="review-block"><h4>连贯性对照（预期 vs 实际）</h4>{data.continuity.map((c, i) => <div className="continuity-row" key={i}><span className="tiny-label">{c.kind}</span><p><strong>预期：</strong>{c.expect}</p><p><strong>实际：</strong>{c.actual}</p>{c.quote && <button className="text-button" onClick={() => locate(c.quote)}>定位<ArrowRight size={12} /></button>}<small>建议：{c.suggestion}</small></div>)}</div>}
+            {data.scores && <div className="radar-wrap" dangerouslySetInnerHTML={{ __html: radarSvg([...reviewDimensions], data.scores) }} />}
             {data.scores && <div className="score-grid">{reviewDimensions.map(d => <div key={d}><span>{d}</span><strong>{data.scores?.[d] ?? '—'}</strong></div>)}</div>}
             {data.deviations && data.deviations.length > 0 && <div className="review-block"><h4>设定偏离项</h4>{data.deviations.map((x, i) => <p key={i} className="review-deviation">{x}</p>)}</div>}
             {data.aiTrace && data.aiTrace.length > 0 && <div className="review-block"><h4>痕迹分析</h4>{data.aiTrace.map((x, i) => <span key={i} className="ai-trace">{x}</span>)}</div>}
@@ -450,6 +455,7 @@ function ZhuqueTab({ chapters, context, run, busy }: { chapters: Entity[]; conte
   const app = useApp();
   const [chapterId, setChapterId] = useState(chapters[0]?.id ?? '');
   const chapter = chapters.find(c => c.id === chapterId);
+  const local = useMemo(() => chapter ? scanAiTraces(chapter.content) : null, [chapter?.id, chapter?.content]);
   const [result, setResult] = useState<{ rates?: Record<string, number>; aiRate?: number | string; suggestions?: string[] } | null>(null);
   const [raw, setRaw] = useState('');
   const detect = async () => {
@@ -460,12 +466,26 @@ function ZhuqueTab({ chapters, context, run, busy }: { chapters: Entity[]; conte
   };
   return <section className="paper-page">
     <div className="panel-heading"><h3>朱雀AI检测过审</h3></div>
-    <p className="muted">采用行业检测原理（困惑度/爆发性/连贯性等七维特征分析）评测章节，参考 AI 率阈值：&lt;20% 人写，20%-50% 明显润色，&gt;70% 易被平台识别。</p>
+    <p className="muted">本地启发式扫描（规则+突发性统计，无需联网、即时）+ 可选七维深度诊断。</p>
     <label>章节<select value={chapterId} onChange={e => setChapterId(e.target.value)}>{chapters.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
-    <div style={{ marginTop: 12 }}><button className="button primary" disabled={busy} onClick={detect}><ShieldCheck size={15} />{busy ? '检测中…' : '开始检测'}</button></div>
+
+    {local && <div className="local-scan">
+      <div className="panel-heading"><h4>本地启发式扫描（即时）</h4><strong className="score">{local.rate}%</strong></div>
+      <div className="stat-mini">
+        <span>句数 {local.stats.sentenceCount}</span>
+        <span>平均句长 {local.stats.avgSentenceLen}</span>
+        <span>突发性 {local.stats.burstiness}</span>
+        <span>重复短语 {local.stats.repeatedPhrases.length}</span>
+        <span>情绪标签 {local.stats.emotionLabelCount}</span>
+      </div>
+      {local.hits.length > 0 && <div className="review-block"><h4>命中的 AI 痕迹（{local.hits.length} 类）</h4>{local.hits.map((h, i) => <div className={`redline-row ${h.level}`} key={i}><span className={`tiny-label severity-badge ${h.level === 'P0' ? '严重' : '轻微'}`}>{h.level}</span><strong>{h.rule}</strong><span className="muted"> × {h.count}</span><blockquote>{h.quote}</blockquote></div>)}</div>}
+      {!local.hits.length && <div className="empty-small">本地扫描未命中已知 AI 痕迹，可再用下方七维深度诊断。</div>}
+    </div>}
+
+    <div style={{ marginTop: 12 }}><button className="button primary" disabled={busy} onClick={detect}><ShieldCheck size={15} />{busy ? '检测中…' : '七维深度诊断'}</button></div>
     <div className="ai-rate-banner">AI 率仅是应用内部估算，用于提示可编辑的写作特征，不能作为作者身份鉴定，也不应据此判断作品由谁创作。</div>
     {result?.rates && <div className="zhuque-dim">{zhuqueDimensions.map(d => <div key={d}><span>{d}</span><strong>{result.rates?.[d] ?? '—'}</strong><small>特征分越高，越接近该维度的常见 AI 写作痕迹。</small></div>)}</div>}
-    {result && result.aiRate != null && <p><strong>内部估算 AI 率：</strong>{result.aiRate}%</p>}
+    {result && result.aiRate != null && <p><strong>七维综合 AI 率：</strong>{result.aiRate}%</p>}
     {result?.suggestions && <div className="plan-list"><h4>降 AI 改稿建议</h4>{result.suggestions.map((s, i) => <p key={i}>{i + 1}. {s}</p>)}</div>}
     {!result && raw && <pre className="raw-result">{raw}</pre>}
   </section>;
@@ -559,6 +579,12 @@ function AppearanceTab({ workId, chapters }: { workId: string; chapters: Entity[
     </table></div>}
     {!rows.length && <div className="empty-small">没有可统计的角色出场。先在设定的人物页添加角色档案。</div>}
   </section>;
+}
+
+function DiffView({ before, after }: { before: string; after: string }) {
+  const segments = diffChars(before, after);
+  if (!segments.length) return <div className="diff-view muted">文本过大，无法逐字对比；请直接查看上方预览。</div>;
+  return <div className="diff-view">{segments.map((s, i) => <span key={i} className={`diff-${s.type}`}>{s.text}</span>)}</div>;
 }
 
 function RewriteDialog({ original, variants, onApply, onClose }: { original: string; variants: string[]; onApply(v: string): void; onClose(): void }) {

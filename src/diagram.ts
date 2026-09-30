@@ -54,6 +54,18 @@ export function makeDiagramSvg(title:string,items:Entity[],type:'characters'|'ma
 }
 export function svgDataUrl(svg:string){return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;}
 
+/** 六维/七维雷达图，纯 SVG，不依赖图表库。 */
+export function radarSvg(dimensions:string[],scores:Record<string,number>,size=380):string{
+  const cx=size/2,cy=size/2,r=size/2-58;const n=dimensions.length;
+  const angle=(i:number)=>-Math.PI/2+(i*2*Math.PI)/n;
+  const pt=(i:number,ratio:number)=>{const a=angle(i);return [cx+r*ratio*Math.cos(a),cy+r*ratio*Math.sin(a)] as const;};
+  const rings=[0.25,0.5,0.75,1].map(q=>`<polygon points="${dimensions.map((_,i)=>pt(i,q).join(',')).join(' ')}" fill="none" stroke="#e4ddd2"/>`).join('');
+  const axes=dimensions.map((_,i)=>`<line x1="${cx}" y1="${cy}" x2="${pt(i,1)[0]}" y2="${pt(i,1)[1]}" stroke="#e4ddd2"/>`).join('');
+  const poly=`<polygon points="${dimensions.map((d,i)=>{const v=Math.max(0,Math.min(100,Number(scores[d]??0)||0))/100;return pt(i,v).join(',');}).join(' ')}" fill="#ad483e33" stroke="#ad483e" stroke-width="2"/>`;
+  const labels=dimensions.map((d,i)=>{const [x,y]=pt(i,1.16);return `<text x="${x}" y="${y}" text-anchor="middle" font-size="13" fill="#5f574d">${escapeXml(d)}</text><text x="${x}" y="${y+16}" text-anchor="middle" font-size="12" font-weight="700" fill="#a3483d">${scores[d]??'—'}</text>`;}).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><g font-family="PingFang SC,Noto Sans CJK SC,sans-serif">${rings}${axes}${poly}${labels}</g></svg>`;
+}
+
 /** Deterministic Chinese-label diagrams avoid garbled text from image models. */
 export function relationshipDiagramSvg(title:string,items:Entity[]):string{
   const cards=items.filter(item=>!item.meta.imageData&&!['人物档案','人物关系'].includes(item.title)).slice(0,20);

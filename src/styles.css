@@ -377,3 +377,18 @@
 .knowledge-cell.knows{background:#e4eee7;color:#55765b}
 .knowledge-cell.unknown{background:#f1ece3;color:#8b8176}
 .knowledge-cell:hover{filter:brightness(.96)}
+
+/* 内测01第2轮：本地AI痕迹扫描 */
+.local-scan{border:1px solid #e6e0d6;border-radius:11px;padding:14px;margin:12px 0;background:#fdfbf7}
+.local-scan .panel-heading{margin-bottom:8px}
+.local-scan .score{font-size:24px}
+
+/* 内测01第2轮：雷达图 */
+.radar-wrap{display:flex;justify-content:center;margin:10px 0}
+.radar-wrap svg{width:100%;max-width:360px;height:auto}
+
+/* 内测01第2轮：改动高亮 diff */
+.diff-view{white-space:pre-wrap;line-height:1.8;font-size:13px;border:1px solid #e7e0d5;border-radius:9px;padding:12px;margin-top:10px;max-height:340px;overflow:auto}
+.diff-same{color:#5f574d}
+.diff-del{background:#fbe4e1;color:#a33;text-decoration:line-through}
+.diff-ins{background:#e4f2e6;color:#2c6b3a}
