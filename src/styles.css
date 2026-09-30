@@ -423,3 +423,104 @@ input,textarea,select{transition:border-color .12s ease,box-shadow .12s ease}
 .page-intro h2{letter-spacing:.01em}
 .topbar{box-shadow:0 1px 0 #00000006}
 .sidebar{border-right-color:#0000000c}
+
+/* ===== 统一色调：米白+黑灰（白天）/ 银灰+黑（夜间），去除黄/红/绿杂色 ===== */
+:root{--ink:#2e3133;--ink-strong:#1f2124;--accent:#3a3d40;--accent-soft:#5f6266;--muted:#8a8d91;--tint:#efeeea;--tint-strong:#e2e2e0;--hairline:#d8d8d4}
+
+/* 品牌与主按钮：黑灰 */
+.button.primary,.top-primary{background:var(--ink)!important;border-color:var(--ink)!important;color:#f6f5f2!important}
+.button.primary:hover,.top-primary:hover{background:var(--ink-strong)!important}
+.brand-icon,.logo-mark{background:var(--ink)!important;color:#f6f5f2!important}
+.cover-tile,.work-cover{background:linear-gradient(145deg,var(--ink),#6b6e72)!important;color:#fff}
+
+/* 文字强调色：去红棕，改灰 */
+.eyebrow{color:var(--accent-soft)!important}
+.tiny-label{color:var(--accent)!important}
+.text-button{color:var(--accent)!important}
+a{color:var(--accent)}
+.danger,.button.danger,.icon-button.danger:hover{color:var(--accent)!important;border-color:var(--hairline)!important}
+.overview-icon,.style-symbol{color:var(--accent)!important}
+.timeline-row>strong,.timeline-dot{background:var(--accent)!important;color:var(--accent)!important}
+.timeline-dot{color:transparent!important}
+.brain-output strong,.drawer-heading span,.drawer-heading strong,.brain-topic h3,.workflow-current span{color:var(--accent)!important}
+
+/* 分数/数字：红改炭黑 */
+.score,.review-score,.role-score,.appearance-total,.reader-sim-card h4,.emotion-curve-label{color:var(--ink)!important}
+.score-grid strong{color:var(--ink)!important}
+
+/* 激活/悬浮的暖红底 → 中性灰底 */
+.nav-item.active{background:var(--tint-strong)!important;color:var(--ink)!important}
+.category-tabs button.selected{background:var(--tint-strong)!important;color:var(--ink)!important}
+.chapter-link.active,.collection-row.active{background:var(--tint-strong)!important;color:var(--ink)!important}
+.agent-type-card.active,.seat-list button.selected,.pipeline-step.active{background:var(--tint-strong)!important;border-color:var(--accent)!important;color:var(--ink)!important}
+.quick-links button{border-color:var(--hairline)!important;color:var(--accent)!important;background:#fff}
+.quick-links button:hover{background:var(--tint)}
+.workflow-current{background:var(--tint)!important}
+.drawer-step-list button.active{background:var(--tint-strong)!important;color:var(--ink)!important}
+.button:hover{border-color:var(--accent-soft);background:#fbfbfa}
+
+/* 聚焦环去红 */
+input:focus,textarea:focus,select:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px #3a3d4022!important}
+.button:focus-visible,.icon-button:focus-visible,.nav-item:focus-visible,button:focus-visible{outline-color:#3a3d4066}
+
+/* 黄色（notice/提示/轻微/deviation/reusable/example/横幅）→ 灰 */
+.notice{background:#f2f2ef!important;color:#4a4d52!important}
+.notice.error{background:#efefec!important;color:#3a3d40!important}
+.ai-rate-banner{background:#f2f2ef!important;color:#4a4d52!important}
+.severity-badge.严重{background:var(--ink)!important}
+.severity-badge.轻微{background:var(--accent-soft)!important}
+.severity-badge.其他{background:var(--muted)!important}
+.issue-card.severity-严重{border-left-color:var(--ink)!important}
+.issue-card.severity-轻微{border-left-color:var(--accent-soft)!important}
+.issue-card.severity-其他{border-left-color:var(--muted)!important}
+.redline-row.P0{border-left-color:var(--ink)!important;background:#f6f6f4!important}
+.redline-row.P1{border-left-color:var(--accent-soft)!important;background:#f8f8f6!important}
+.review-deviation{border-left-color:var(--accent-soft)!important;color:#4a4d52!important}
+.reusable-row{border-left-color:var(--accent-soft)!important}
+.split-example{border-left-color:var(--accent)!important;color:#4a4d52!important}
+.continuity-row{border-left-color:var(--accent-soft)!important;background:#f6f6f4!important}
+.ai-trace{background:#e6e6e4!important;color:var(--ink)!important}
+.stat-mini span,.foreshadow-stats span{color:#4a4d52!important}
+
+/* 绿色（状态/已知/完成/成功）→ 灰阶 */
+.status-pill{background:#e4e4e2!important;color:#3a3d40!important}
+.knowledge-cell.knows{background:var(--tint-strong)!important;color:var(--ink)!important}
+.knowledge-cell.unknown{background:#f1f1ee!important;color:var(--muted)!important}
+.pipeline-step.done{background:#e4e4e2!important;color:#3a3d40!important}
+.diff-ins{background:#e2e2e0!important;color:var(--ink)!important}
+.diff-del{background:#ececea!important;color:var(--muted)!important;text-decoration:line-through}
+.foreshadow-status-plant{color:#3a3d40}
+.foreshadow-status-reveal{color:var(--ink)}
+.foreshadow-status-discard{color:var(--muted)}
+
+/* 渐变（出场条形/情绪曲线/封面）→ 灰阶渐变 */
+.appearance-fill{background:linear-gradient(90deg,var(--accent-soft),var(--ink))!important}
+.emotion-curve-bar{background:linear-gradient(180deg,var(--accent-soft),var(--ink))!important}
+.setting-card-cover,.setting-editor-cover.placeholder{background:linear-gradient(135deg,#e6e6e4,#f2f1ee)!important;color:var(--accent-soft)}
+
+/* 关系画布（React Flow）去红 */
+.react-flow__handle{background:var(--accent)!important;border-color:#fff}
+.person-node{border-color:var(--accent)!important;background:#faf9f7}
+.person-node:hover{border-color:var(--ink)!important;background:var(--tint)}
+
+/* 夜间主题：银灰 + 黑 */
+:root[data-theme='dark']{--ink:#cdd0d5;--ink-strong:#e3e5e8;--accent:#b8bcc2;--accent-soft:#8f949b;--muted:#6b7076;--tint:#1f2124;--tint-strong:#2a2d31;--hairline:#3a3d40}
+:root[data-theme='dark'] .button.primary,:root[data-theme='dark'] .top-primary{background:#cdd0d5!important;border-color:#cdd0d5!important;color:#141518!important}
+:root[data-theme='dark'] .button.primary:hover,:root[data-theme='dark'] .top-primary:hover{background:#e3e5e8!important}
+:root[data-theme='dark'] .brand-icon,:root[data-theme='dark'] .logo-mark{background:#cdd0d5!important;color:#141518!important}
+:root[data-theme='dark'] .cover-tile,:root[data-theme='dark'] .work-cover{background:linear-gradient(145deg,#cdd0d5,#8f949b)!important;color:#141518}
+:root[data-theme='dark'] .button:hover{background:#2a2d31;border-color:#8f949b}
+:root[data-theme='dark'] .quick-links button{background:#1f2124;color:#b8bcc2}
+:root[data-theme='dark'] .nav-item.active,:root[data-theme='dark'] .category-tabs button.selected,:root[data-theme='dark'] .chapter-link.active,:root[data-theme='dark'] .collection-row.active,:root[data-theme='dark'] .agent-type-card.active,:root[data-theme='dark'] .seat-list button.selected,:root[data-theme='dark'] .pipeline-step.active,:root[data-theme='dark'] .drawer-step-list button.active{background:#2a2d31!important;color:#e3e5e8!important}
+:root[data-theme='dark'] .severity-badge.严重{background:#cdd0d5!important;color:#141518}
+:root[data-theme='dark'] .severity-badge.轻微{background:#8f949b!important;color:#141518}
+:root[data-theme='dark'] .ai-trace{background:#2a2d31!important;color:#cdd0d5!important}
+:root[data-theme='dark'] .notice,:root[data-theme='dark'] .ai-rate-banner,:root[data-theme='dark'] .continuity-row,:root[data-theme='dark'] .redline-row.P0,:root[data-theme='dark'] .redline-row.P1{background:#202226!important;color:#cdd0d5!important}
+:root[data-theme='dark'] .knowledge-cell.knows{background:#2a2d31!important;color:#e3e5e8!important}
+:root[data-theme='dark'] .knowledge-cell.unknown{background:#1a1c1f!important;color:#6b7076!important}
+:root[data-theme='dark'] .person-node{background:#1f2124;border-color:#8f949b;color:#e3e5e8}
+
+/* 统一动画：单一时长与缓动 */
+.button,.icon-button,.nav-item,.work-back,.sidebar-section,.tool-card,.overview-card,.setting-visual-card,.style-card,.entity-card,.work-card,.restriction-card,.category-tabs button,.chapter-link,.collection-row,.agent-type-card,.pipeline-step,.seat-list button,.quick-links button{transition:background .16s ease,color .16s ease,border-color .16s ease,transform .16s ease,box-shadow .16s ease}
+.modal-card,.drawer,.canvas-panel{animation:pop-in .16s ease}
+.toast{animation:toast-in .2s ease}
