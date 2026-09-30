@@ -8,7 +8,8 @@
     "start": "electron .",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "pack:mac": "npm run build && electron-builder --mac dir && codesign --force --deep --sign - release/mac-arm64/JZRM.app && codesign --verify --deep --strict release/mac-arm64/JZRM.app"
+    "pack:mac": "npm run build && electron-builder --mac dir && codesign --force --deep --sign - release/mac-arm64/JZRM.app && codesign --verify --deep --strict release/mac-arm64/JZRM.app",
+    "pack:win": "npm run build && electron-builder --win nsis"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,8 @@
     "productName": "JZRM",
     "directories": { "output": "release" },
     "files": ["dist/**/*", "electron/**/*", "package.json", "node_modules/**/*"],
-    "mac": { "category": "public.app-category.productivity", "target": ["dir"], "icon": "build/icon.png" }
+    "mac": { "category": "public.app-category.productivity", "target": ["dir"], "icon": "build/icon.png" },
+    "win": { "target": ["nsis"], "icon": "build/icon.png" }
   },
   "dependencies": {
     "@xyflow/react": "^12.12.0",
